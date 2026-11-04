@@ -3,7 +3,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&family=Roboto:wght@400;500;700;900&family=Inter:wght@400;500;600;700;800&family=Montserrat:wght@500;700;800&family=Nunito:wght@500;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&family=Roboto:wght@400;500;700;900&family=Inter:wght@400;500;600;700;800&family=Montserrat:wght@500;700;800&family=Nunito:wght@500;700;800&family=TikTok+Sans:wght@500;600;700;800&display=swap">
 <style>
 /* Layout: sticky phone-shaped preview on the left, stacked settings drawers on the right; one column on phones */
 :root{
@@ -145,6 +145,15 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .dlg video{width:100%;max-height:52vh;border-radius:14px;background:#000}
 .dlg .row{justify-content:flex-end}
 #lottieBox{position:fixed;left:-10000px;top:0;width:360px;height:360px;pointer-events:none}
+.gstat{font-size:12px;color:var(--muted);grid-column:2/-1;margin-top:-2px}
+.gstat.ok{color:#9fe3c8}.gstat.err{color:var(--err)}
+.giftrow{display:grid;grid-template-columns:minmax(0,1fr) 74px;gap:6px}
+.swatches{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.scene .grid3,.scene .grid2{align-items:start}
+.sw{width:24px;height:24px;border-radius:50%;border:2px solid transparent;padding:0;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}
+.sw.on{border-color:var(--fg)}
+.swc{width:26px;height:26px;border:0;padding:0;background:none;cursor:pointer}
+.swc::-webkit-color-swatch-wrapper{padding:0}.swc::-webkit-color-swatch{border-radius:50%;border:1px solid rgba(255,255,255,.3)}
 @media (max-width:880px){
   .layout{grid-template-columns:minmax(0,1fr)}
   .stage{position:static;max-width:400px;width:100%;margin:0 auto}
@@ -248,17 +257,19 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
         <div class="sec-body">
           <div class="grid3">
             <label class="f">Ник<input type="text" data-path="profile.nick"></label>
-            <label class="f">Значок перед ником<select data-path="profile.badgeStyle"><option value="rosette">Розетка с короной</option><option value="verified">Синяя галочка</option><option value="text">Свой символ ↓</option><option value="none">Без значка</option></select><input type="text" data-path="profile.badge" maxlength="6" aria-label="Свой символ значка"></label>
+            <label class="f">Значок перед ником<select data-path="profile.badgeStyle"><option value="rosette">Розетка с короной</option><option value="file">Свой премиум-эмодзи (файл)</option><option value="verified">Синяя галочка</option><option value="text">Свой символ ↓</option><option value="none">Без значка</option></select><input type="text" data-path="profile.badge" maxlength="6" aria-label="Свой символ значка"></label>
             <label class="f">Эмодзи-статус<input type="text" data-path="profile.emoji" maxlength="8"></label>
           </div>
           <div class="grid2">
-            <label class="f">Картинка эмодзи-статуса<span class="row"><span class="filebtn btn small">Выбрать<input type="file" accept="image/*" data-img="profile.emojiImg" aria-label="Картинка эмодзи-статуса"></span><button class="btn small ghost" type="button" data-clear="profile.emojiImg">Убрать</button></span></label>
-            <label class="f">Аватар<span class="row"><span class="filebtn btn small">Выбрать<input type="file" accept="image/*" data-img="profile.avatar" aria-label="Аватар"></span><button class="btn small ghost" type="button" data-clear="profile.avatar">Убрать</button></span></label>
+            <label class="f">Премиум-эмодзи после ника<span class="row"><span class="filebtn btn small">Выбрать файл<input type="file" id="emojiFileIn" aria-label="Премиум-эмодзи после ника"></span><button class="btn small ghost" type="button" id="emojiFileClear">Убрать</button></span><span class="hint">Сейчас: <b id="emojiFileName">нет</b>. Подходят .tgs, .webm, .webp, .png, .gif</span></label>
+            <label class="f">Премиум-эмодзи перед ником<span class="row"><span class="filebtn btn small">Выбрать файл<input type="file" id="badgeFileIn" aria-label="Премиум-эмодзи перед ником"></span><button class="btn small ghost" type="button" id="badgeFileClear">Убрать</button></span><span class="hint">Сейчас: <b id="badgeFileName">нет</b>. Заменяет розетку</span></label>
+            <label class="color"><input type="color" data-path="profile.badgeColor"><span>Цвет розетки</span></label>
+            <label class="f">Аватар<span class="row"><span class="filebtn btn small">Выбрать фото<input type="file" accept="image/*" data-img="profile.avatar" aria-label="Аватар"></span><button class="btn small ghost" type="button" data-clear="profile.avatar">Убрать фото — будет буква</button></span><span class="hint">Цвет кружка с буквой</span><span id="profLetter"></span></label>
           </div>
           <div class="grid3">
             <label class="f">Непрочитанные<input type="number" data-path="profile.counter" min="0"></label>
             <label class="f">Время сообщений<input type="text" data-path="profile.time" maxlength="8"></label>
-            <label class="f">Галочки<select data-path="profile.checks"><option value="one">Одна ✓</option><option value="two">Две ✓✓</option><option value="none">Без галочек</option></select></label>
+            <label class="f">Галочки<select data-path="profile.checks"><option value="one">Одна ✓ (не прочитано)</option><option value="read">✓ → ✓✓ (прочитано через секунду)</option><option value="two">Сразу две ✓✓</option><option value="none">Без галочек</option></select></label>
           </div>
           <label class="f">Подпись даты<input type="text" data-path="profile.dateLabel"></label>
         </div>
@@ -268,7 +279,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
         <summary><span class="sec-ico"><svg viewBox="0 0 24 24"><path d="M4 4h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H8l-4 4V6a2 2 0 0 1 2-2zm3 5v2h10V9H7zm0 4v2h7v-2H7z"/></svg></span><span class="sec-title">Сценарий</span><span class="sec-sub" id="scnSub"></span></summary>
         <div class="sec-body">
           <div id="scenes" style="display:grid;gap:12px"></div>
-          <div class="row"><button class="btn small" id="addScene" type="button">+ Сцена</button></div>
+          <div class="row"><button class="btn small" id="addScene" type="button">+ Сцена</button><button class="btn small ghost" id="tplSpam" type="button">Шаблон: missed дарит подарки подряд</button><button class="btn small ghost" id="tplAsk" type="button">Шаблон: как просят / как прошу</button><button class="btn small ghost" id="tplMom" type="button">Шаблон: маме / missed</button></div>
           <div class="grid2">
             <div class="range"><div class="rl"><span>Скорость печати</span><output data-out="video.typeSpeed"></output></div><input type="range" min="0.03" max="0.2" step="0.005" data-path="video.typeSpeed" aria-label="Скорость печати"></div>
             <div class="range"><div class="rl"><span>Пауза между сообщениями</span><output data-out="video.gap"></output></div><input type="range" min="0.1" max="1.5" step="0.05" data-path="video.gap" aria-label="Пауза между сообщениями"></div>
@@ -316,9 +327,14 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
             <label class="f">Финал, сек<input type="number" data-path="video.outroDur" min="1" max="6" step="0.1"></label>
           </div>
           <label class="toggle"><input type="checkbox" data-path="video.letterbox">Чёрные полосы сверху и снизу (как в оригинале)</label>
+          <label class="f">Как появляются сообщения<select data-path="video.msgAnim"><option value="rise">Выезжают снизу из-под поля ввода (как в роликах)</option><option value="ios26">Вылетают из поля ввода (iOS 26)</option></select></label>
           <div class="grid2">
             <label class="color"><input type="color" data-path="video.captionColor"><span>Цвет подписи сцены</span></label>
             <div class="range"><div class="rl"><span>Размер подписи</span><output data-out="video.captionSize"></output></div><input type="range" min="20" max="44" step="1" data-path="video.captionSize" aria-label="Размер подписи"></div>
+          </div>
+          <div class="grid2">
+            <label class="f">Где подпись сцены<select data-path="video.captionPos"><option value="top">В чёрной полосе сверху</option><option value="center">Поверх чата, посередине</option></select></label>
+            <div class="range"><div class="rl"><span>Высота подписи поверх чата</span><output data-out="video.captionY"></output></div><input type="range" min="0.2" max="0.8" step="0.01" data-path="video.captionY" aria-label="Высота подписи"></div>
           </div>
           <p class="sub">Звук</p>
           <label class="toggle"><input type="checkbox" data-path="video.sfx">Звуки клавиатуры, отправки и подарка</label>
@@ -410,12 +426,12 @@ const DEFAULT = {
     lModel:'Модель', lBackdrop:'Фон', lSymbol:'Значок',
     center:'#55c49c', edge:'#3a9677', pattern:'#2a7a5c', frame:'#9d8cf0', ribbonColor:'#2c7558',
     autoColors:true, symbolEmoji:'🕯️', symbolImg:null, showPattern:true,
-    ribbon:'подарок', button:'Посмотреть', service:'missed подарил(а) вам\nколлекционный подарок', modelScale:1
+    ribbon:'подарок', button:'Посмотреть', service:'{ник} подарил(а) вам\nколлекционный подарок', modelScale:1
   },
-  profile: { nick:'missed', badgeStyle:'rosette', badge:'✿', emoji:'💜', emojiImg:null, avatar:null, counter:67, time:'03:12', checks:'one', dateLabel:'Сегодня' },
+  profile: { nick:'missed', letterColor:'auto', badgeStyle:'rosette', badgeColor:'#3d8fe0', badgeFile:null, emojiFile:null, badge:'✿', emoji:'💜', emojiImg:null, avatar:null, counter:67, time:'03:12', checks:'one', dateLabel:'Сегодня' },
   theme: Object.assign({preset:'lavender', font:'iOS', bgImg:null, bgDim:0.15, glass:0.55, greyAway:false, bgStyle:'linear', bg3:'#c9b8fb'}, THEMES.lavender),
-  video: { res:720, fps:30, letterbox:true, captionColor:'#ffffff', captionSize:31, typeSpeed:0.055, gap:0.28,
-           sfx:true, sfxVol:0.6, musicVol:0.7, musicOffset:0, outro:true, outroDur:2.2, handle:'@missed', outroText:'подпишись', watermark:false, keyboard:false },
+  video: { res:720, fps:30, letterbox:true, captionColor:'#ffffff', captionSize:31, captionPos:'top', captionY:0.5, typeSpeed:0.055, gap:0.28,
+           sfx:true, sfxVol:0.6, musicVol:0.7, musicOffset:0, outro:true, outroDur:2.2, handle:'@missed', outroText:'подпишись', watermark:false, keyboard:false, msgAnim:'rise' },
   scenes: [
     { caption:'Как просят подарки все:', status:'был(а) недавно', hold:0.5, events:[
       {type:'out', text:'дай подарок'}, {type:'out', text:'нуууу'}, {type:'out', text:'чел'}, {type:'out', text:'ясно скам'} ]},
@@ -471,7 +487,7 @@ function loadImage(src){ return new Promise((res,rej)=>{ const i = new Image(); 
 /* =========================== state =========================== */
 let S = loadState();
 function loadState(){
-  try { const raw = localStorage.getItem(LS_KEY); if (raw){ const st = deepMerge(clone(DEFAULT), JSON.parse(raw)); if (st.theme.font === 'Inter') st.theme.font = 'iOS'; st.video.keyboard = false; return st; } } catch(e) {}
+  try { const raw = localStorage.getItem(LS_KEY); if (raw){ const st = deepMerge(clone(DEFAULT), JSON.parse(raw)); if (st.gift.service === 'missed подарил(а) вам\nколлекционный подарок') st.gift.service = DEFAULT.gift.service; if (st.theme.font === 'Inter') st.theme.font = 'iOS'; st.video.keyboard = false; return st; } } catch(e) {}
   return clone(DEFAULT);
 }
 let saveTimer = null;
@@ -504,7 +520,7 @@ function compile(){
   let t = 0;
   const spd = +S.video.typeSpeed || 0.075, gap = +S.video.gap || 0.35;
   S.scenes.forEach((sc, si) => {
-    const s = {start:t, caption:sc.caption||'', status:sc.status||'', items:[], inputs:[], statuses:[], typing:[], bursts:[], kb:[]};
+    const s = {start:t, caption:sc.caption||'', status:sc.status||'', items:[], inputs:[], statuses:[], typing:[], bursts:[], kb:[], chat: {nick: (sc.nick || '').trim(), avatarMode: sc.avatarMode || 'profile', avatar: sc.avatar || null, badges: sc.badges !== false, counter: sc.counter, letterColor: sc.letterColor || ''}};
     const r = rng(1013 + si*7919);
     let ct = t + 0.45, first = true;
     const times = [];
@@ -530,7 +546,7 @@ function compile(){
         ct = at + gap + 0.15;
       } else if (ev.type === 'gift'){
         const at = ct + 0.35;
-        addItem({kind:'gift', appear:at});
+        addItem({kind:'gift', appear:at, nft: String(ev.nft || '').trim()});
         s.bursts.push({t:at, seed: 77 + si*31 + ei});
         tl.sounds.push({t:at, type:'gift'});
         ct = at + Math.max(0.3, +ev.dur || 1.8);
@@ -629,14 +645,14 @@ const MSG = {fs:22.5, lh:28, px:16.5, py:9.5, maxW: W*0.78};
 function metaWidth(ctx, out){
   ctx.font = F(400, 15.5);
   let w = ctx.measureText(S.profile.time || '').width;
-  if (out && S.profile.checks !== 'none') w += S.profile.checks === 'two' ? 23 : 18;
+  if (out && S.profile.checks !== 'none') w += S.profile.checks === 'one' ? 18 : 23;
   return w;
 }
 function layoutItem(ctx, it){
   if (it.kind === 'date'){ ctx.font = F(700, 16); const tw = ctx.measureText(S.profile.dateLabel || '').width; return {w: tw + 26, h: 31}; }
   if (it.kind === 'gift'){
     ctx.font = F(600, 14);
-    const lines = String(S.gift.service || '').split('\n').filter(l => l.trim());
+    const lines = String(S.gift.service || '').replace(/\{ник\}|\{nick\}/gi, (renderChat && renderChat.nick) || S.profile.nick || '').split('\n').filter(l => l.trim());
     const sw = lines.length ? Math.max(...lines.map(l => ctx.measureText(l).width)) + 26 : 0;
     const sh = lines.length ? lines.length * 18 + 10 : 0;
     return {lines, sw, sh, cardW:340, cardH:490, h: (sh ? sh + 6 : 0) + 490};
@@ -681,7 +697,8 @@ function bubblePath(ctx, x, y, w, h, side, first, tail){
 function drawCheck(ctx, x, y, color, two){
   ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
   const one = (ox) => { ctx.beginPath(); ctx.moveTo(x + ox, y - 4.5); ctx.lineTo(x + ox + 4, y - 0.5); ctx.lineTo(x + ox + 12, y - 10.5); ctx.stroke(); };
-  one(0); if (two) one(5);
+  one(0);
+  if (two){ ctx.globalAlpha *= (two === true ? 1 : two); one(5); }
   ctx.restore();
 }
 function drawBubble(ctx, it, L, y, first, tail, xo, bgA, metaA){
@@ -703,7 +720,8 @@ function drawBubble(ctx, it, L, y, first, tail, xo, bgA, metaA){
   ctx.fillText(S.profile.time || '', mx, my);
   if (out && S.profile.checks !== 'none'){
     const tw = ctx.measureText(S.profile.time || '').width;
-    drawCheck(ctx, mx + tw + 5, my, metaColor, S.profile.checks === 'two');
+    const readK = S.profile.checks === 'two' ? 1 : S.profile.checks === 'read' ? clamp((renderT - it.appear - (+S.profile.readDelay || 0.9)) / 0.12, 0, 1) : 0;
+    drawCheck(ctx, mx + tw + 5, my, metaColor, readK);
   }
   ctx.globalAlpha = base;
 }
@@ -716,7 +734,7 @@ function drawDate(ctx, L, y){
 }
 
 /* ---------- gift card ---------- */
-let patternCache = {key:null, canvas:null};
+const patternCache = new Map();
 function symbolSprite(color){
   const c = document.createElement('canvas'); c.width = c.height = 72; const x = c.getContext('2d');
   const img = getImg(S.gift.symbolImg);
@@ -725,10 +743,10 @@ function symbolSprite(color){
   x.globalCompositeOperation = 'source-in'; x.fillStyle = color; x.fillRect(0, 0, 72, 72);
   return c;
 }
-function getPattern(k, w, h){
-  const g = S.gift;
+function getPattern(k, w, h, g){
+  g = g || S.gift;
   const key = [k, w, h, g.pattern, g.symbolEmoji, g.symbolImg ? g.symbolImg.length + g.symbolImg.slice(-40) : '', !!getImg(g.symbolImg)].join('|');
-  if (patternCache.key === key) return patternCache.canvas;
+  if (patternCache.has(key)) return patternCache.get(key);
   const c = document.createElement('canvas'); c.width = Math.ceil(w*k); c.height = Math.ceil(h*k);
   const x = c.getContext('2d'); x.scale(k, k);
   const spr = symbolSprite(g.pattern);
@@ -744,7 +762,8 @@ function getPattern(k, w, h){
       x.drawImage(spr, px - size/2, py - size/2, size, size);
     }
   });
-  patternCache = {key, canvas:c};
+  if (patternCache.size > 12) patternCache.clear();
+  patternCache.set(key, c);
   return c;
 }
 function drawFlower(ctx, cx, cy, size, t){
@@ -773,8 +792,8 @@ function drawFlower(ctx, cx, cy, size, t){
   ctx.fillStyle = cg; ctx.beginPath(); ctx.arc(0, 0, R*0.2, 0, Math.PI*2); ctx.fill();
   ctx.restore();
 }
-function drawModel(ctx, cx, cy, size, dt){
-  const a = giftAsset;
+function drawModel(ctx, cx, cy, size, dt, asset){
+  const a = asset === undefined ? giftAsset : asset;
   if (a && a.kind === 'lottie' && a.anim && a.canvas){
     try {
       const fr = a.anim.frameRate || 60, total = Math.max(1, a.anim.totalFrames);
@@ -794,14 +813,21 @@ function drawModel(ctx, cx, cy, size, dt){
   }
   drawFlower(ctx, cx, cy, size, dt);
 }
+function resolveGift(it){
+  const b = it.nft ? giftBundles.get(normLink(it.nft)) : null;
+  if (b && b.status === 'ok') return {g: Object.assign({}, S.gift, b.meta), asset: b.asset};
+  if (b) return {g: Object.assign({}, S.gift, b.meta || {}), asset: b.asset || null};
+  return {g: S.gift, asset: giftAsset};
+}
 function drawGift(ctx, it, L, y, t, k){
-  const g = S.gift, T = S.theme;
+  const RG = resolveGift(it), g = RG.g, T = S.theme;
   const dt = t - it.appear;
   const p = clamp(dt / 0.55, 0, 1);
-  const sc = 0.62 + 0.38 * ease.back(p);
+  const riseMode = S.video.msgAnim !== 'ios26';
+  const sc = riseMode ? 1 : 0.62 + 0.38 * ease.back(p);
   const cx = W/2;
   ctx.save();
-  ctx.globalAlpha *= clamp(dt / 0.2, 0, 1);
+  ctx.globalAlpha *= clamp(dt / (riseMode ? 0.12 : 0.2), 0, 1);
   ctx.translate(cx, y + L.h/2); ctx.scale(sc, sc); ctx.translate(-cx, -(y + L.h/2));
   let top = y;
   if (L.sh){
@@ -818,9 +844,9 @@ function drawGift(ctx, it, L, y, t, k){
   bg.addColorStop(0, g.center); bg.addColorStop(1, g.edge);
   ctx.fillStyle = bg; ctx.fillRect(ix, iy, iw, ih);
   if (g.showPattern){
-    const pimg = giftAsset && giftAsset.patternImg;
+    const pimg = RG.asset && RG.asset.patternImg;
     if (pimg){ const ps = iw * 1.42 * (+g.modelScale || 1); ctx.drawImage(pimg, cx - ps/2, iy + 100 - ps/2, ps, ps); }
-    else { const pc = getPattern(k, iw, ih); ctx.drawImage(pc, ix, iy, iw, ih); }
+    else { const pc = getPattern(k, iw, ih, g); ctx.drawImage(pc, ix, iy, iw, ih); }
   }
   if (g.ribbon){
     ctx.save(); ctx.translate(ix + iw - 29, iy + 29); ctx.rotate(Math.PI/4);
@@ -829,11 +855,11 @@ function drawGift(ctx, it, L, y, t, k){
     ctx.fillText(g.ribbon, 0, 1); ctx.restore();
   }
   const ms = 150 * (+g.modelScale || 1);
-  drawModel(ctx, cx, iy + 92, ms, dt);
+  drawModel(ctx, cx, iy + 92, ms, dt, RG.asset);
   const soft = mix(g.center, '#ffffff', 0.62);
   ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
   ctx.fillStyle = '#ffffff';
-  const title = String(g.title || '').replace(/\{ник\}|\{nick\}/gi, S.profile.nick || '');
+  const title = String(g.title || '').replace(/\{ник\}|\{nick\}/gi, (renderChat && renderChat.nick) || S.profile.nick || '');
   fitText(ctx, title, cx, iy + 241, iw - 30, 700, 22.5);
   ctx.fillStyle = soft;
   const sub = `${g.collection || ''}${g.number ? ' #' + fmtNum(g.number) : ''}`;
@@ -872,22 +898,23 @@ function drawMessages(ctx, sc, t, G, k){
   for (let i = items.length - 1; i >= 0; i--){
     const it = items[i];
     const dt = t - it.appear;
-    const e = it.kind === 'out' ? ease.spring(clamp(dt / FLY, 0, 1)) : ease.spring(clamp(dt / 0.34, 0, 1));
+    const rise = S.video.msgAnim !== 'ios26';
+    const e = rise ? (it.kind === 'gift' ? ease.spring(clamp(dt / 0.42, 0, 1)) : ease.out(clamp(dt / 0.24, 0, 1))) : (it.kind === 'out' ? ease.spring(clamp(dt / FLY, 0, 1)) : ease.spring(clamp(dt / 0.34, 0, 1)));
     const L = layoutItem(ctx, it);
     y -= L.h * e;
     if (y + L.h > G.R.y - 20){
       const next = items[i+1], prev = items[i-1];
       const tail = !(next && next.kind === it.kind && next.appear <= t);
       const first = !(prev && prev.kind === it.kind);
-      if (it.kind === 'out' && dt < FLY){
+      if (!rise && it.kind === 'out' && dt < FLY){
         flying.push({it, L, y, first, tail, p: dt / FLY});
       } else {
         ctx.save();
         if (it.kind === 'gift') drawGift(ctx, it, L, y, t, k);
         else {
-          const p = clamp(dt / 0.22, 0, 1);
+          const p = clamp(dt / (rise ? 0.14 : 0.22), 0, 1);
           ctx.globalAlpha = p;
-          if (it.kind !== 'out'){
+          if (!rise && it.kind !== 'out'){
             const s = 0.72 + 0.28 * ease.spring(clamp(dt / 0.34, 0, 1));
             const ax = it.kind === 'in' ? 16 : W/2, ay = y + L.h;
             ctx.translate(ax, ay); ctx.scale(s, s); ctx.translate(-ax, -ay);
@@ -977,15 +1004,73 @@ function pill(ctx, x, y, w, h, boost){
 function circleBtn(ctx, cx, cy, r, boost){ pill(ctx, cx - r, cy - r, 2*r, 2*r, boost); }
 function drawRosette(ctx, cx, cy, r, color){
   ctx.save(); ctx.fillStyle = color; ctx.beginPath();
-  const n = 9;
-  for (let i = 0; i <= n * 2; i++){ const a = i / (n*2) * Math.PI * 2 - Math.PI/2; const rad = i % 2 ? r * 0.84 : r; const px = cx + Math.cos(a) * rad, py = cy + Math.sin(a) * rad; i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }
+  const n = 8, ri = r * 0.8;
+  for (let i = 0; i < n; i++){
+    const a0 = (i / n) * Math.PI * 2 - Math.PI / 2, a1 = ((i + 0.5) / n) * Math.PI * 2 - Math.PI / 2, a2 = ((i + 1) / n) * Math.PI * 2 - Math.PI / 2;
+    const p0 = [cx + Math.cos(a0) * ri, cy + Math.sin(a0) * ri], c = [cx + Math.cos(a1) * r * 1.13, cy + Math.sin(a1) * r * 1.13], p2 = [cx + Math.cos(a2) * ri, cy + Math.sin(a2) * ri];
+    if (i === 0) ctx.moveTo(p0[0], p0[1]);
+    ctx.quadraticCurveTo(c[0], c[1], p2[0], p2[1]);
+  }
   ctx.closePath(); ctx.fill();
-  ctx.fillStyle = luminance(color) > 0.5 ? '#000' : '#fff';
-  const s = r * 0.5;
-  ctx.beginPath();
-  ctx.moveTo(cx - s, cy + s*0.55); ctx.lineTo(cx - s, cy - s*0.45); ctx.lineTo(cx - s*0.45, cy); ctx.lineTo(cx, cy - s*0.6);
-  ctx.lineTo(cx + s*0.45, cy); ctx.lineTo(cx + s, cy - s*0.45); ctx.lineTo(cx + s, cy + s*0.55); ctx.closePath(); ctx.fill();
+  const s = r * 0.52, ink = luminance(color) > 0.6 ? '#000' : '#fff';
+  ctx.fillStyle = ink; ctx.beginPath();
+  ctx.moveTo(cx - s, cy + s * 0.62); ctx.lineTo(cx - s, cy - s * 0.42); ctx.lineTo(cx - s * 0.48, cy - s * 0.02);
+  ctx.lineTo(cx, cy - s * 0.62); ctx.lineTo(cx + s * 0.48, cy - s * 0.02); ctx.lineTo(cx + s, cy - s * 0.42); ctx.lineTo(cx + s, cy + s * 0.62); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = color; rr(ctx, cx - s * 0.62, cy + s * 0.12, s * 1.24, s * 0.3, s * 0.08); ctx.fill();
   ctx.restore();
+}
+const slotRT = {badge: null, emoji: null};
+async function buildSlot(name){
+  const old = slotRT[name];
+  if (old){ if (old.anim) try { old.anim.destroy(); } catch(e) {} if (old.box) old.box.remove(); if (old.video) { old.video.pause(); old.video.remove(); } }
+  slotRT[name] = null;
+  const f = S.profile[name + 'File'];
+  if (!f) { requestDraw(); return; }
+  try {
+    if (f.kind === 'tgs'){
+      if (!(await ensureLottie())) return;
+      const box = document.createElement('div'); box.style.cssText = 'position:absolute;left:0;top:0;width:128px;height:128px'; $('#lottieBox').appendChild(box);
+      const anim = window.lottie.loadAnimation({container: box, renderer: 'canvas', loop: false, autoplay: false, animationData: JSON.parse(JSON.stringify(f.data)), rendererSettings: {clearCanvas: true}});
+      await new Promise(res => { let d = false; const fin = () => { if (!d){ d = true; res(); } }; anim.addEventListener('DOMLoaded', fin); setTimeout(fin, 1200); });
+      slotRT[name] = {kind:'tgs', anim, box, canvas: box.querySelector('canvas')};
+    } else if (f.kind === 'video'){
+      const v = document.createElement('video'); v.muted = true; v.loop = true; v.playsInline = true; v.autoplay = true; v.src = f.src;
+      v.style.cssText = 'position:absolute;left:0;top:0;width:64px;height:64px'; $('#lottieBox').appendChild(v);
+      try { await v.play(); } catch(e) {}
+      slotRT[name] = {kind:'video', video: v};
+    } else if (f.kind === 'img'){
+      slotRT[name] = {kind:'img', img: await loadImage(f.src)};
+    }
+  } catch(e){ console.warn('slot', name, e); }
+  requestDraw();
+}
+function drawSlot(ctx, rt, x, y, size, t){
+  if (!rt) return false;
+  try {
+    if (rt.kind === 'tgs'){ const fr = rt.anim.frameRate || 60, total = Math.max(1, rt.anim.totalFrames); rt.anim.goToAndStop(Math.floor(t * fr) % total, true); ctx.drawImage(rt.canvas, x, y, size, size); return true; }
+    if (rt.kind === 'video'){ if (rt.video.readyState >= 2) ctx.drawImage(rt.video, x, y, size, size); return true; }
+    if (rt.kind === 'img'){ const im = rt.img, sc = size / Math.max(im.naturalWidth, im.naturalHeight); ctx.drawImage(im, x + (size - im.naturalWidth * sc) / 2, y + (size - im.naturalHeight * sc) / 2, im.naturalWidth * sc, im.naturalHeight * sc); return true; }
+  } catch(e) {}
+  return false;
+}
+async function handleSlotFile(name, file){
+  const buf = await file.arrayBuffer(), u8 = new Uint8Array(buf);
+  let f = null;
+  if (u8[0] === 0x1f && u8[1] === 0x8b) f = {kind:'tgs', data: JSON.parse(await gunzip(buf)), name: file.name};
+  else if (u8[0] === 0x7b){ const j = JSON.parse(new TextDecoder().decode(u8)); if (Array.isArray(j.layers)) f = {kind:'tgs', data: j, name: file.name}; }
+  else if ((file.type || '').startsWith('video/') || /\.(webm|mp4|mov)$/i.test(file.name)) f = {kind:'video', src: await fileToDataURL(file), name: file.name};
+  else {
+    let src = await fileToDataURL(file);
+    if (!/\.(gif|webp)$/i.test(file.name) && !/image\/(gif|webp)/.test(file.type)) src = await downscale(src, 256);
+    f = {kind:'img', src, name: file.name};
+  }
+  if (!f) throw new Error('format');
+  S.profile[name + 'File'] = f;
+  if (name === 'badge') S.profile.badgeStyle = 'file';
+  syncFields(); onChange(); await buildSlot(name); updateSlotNames();
+}
+function updateSlotNames(){
+  for (const n of ['badge', 'emoji']){ const el = document.getElementById(n + 'FileName'); if (el){ const f = S.profile[n + 'File']; el.textContent = f ? f.name : 'нет'; } }
 }
 function drawVerified(ctx, cx, cy, r){
   drawRosette(ctx, cx, cy, r, '#3a9ff5');
@@ -999,25 +1084,44 @@ function currentStatus(sc, t){
   for (const s of sc.statuses) if (t >= s.t) st = s.text;
   return {typing:false, text:st};
 }
-function drawAvatar(ctx, cx, cy, r){
-  const img = getImg(S.profile.avatar);
+function chatOf(sc){
+  const c = (sc && sc.chat) || {};
+  const P = Object.assign({}, S.profile);
+  if (c.nick) P.nick = c.nick;
+  if (c.badges === false){ P.badgeStyle = 'none'; P.emoji = ''; P.emojiImg = null; P._noSlots = true; }
+  if (c.counter !== undefined && c.counter !== null && c.counter !== '') P.counter = c.counter;
+  P._avatarMode = c.avatarMode || 'profile'; P._avatar = c.avatar || null; P._letterColor = c.letterColor || S.profile.letterColor || 'auto';
+  return P;
+}
+let renderChat = null;
+const AVATAR_GRADS = [['#ff885e','#ff516a'], ['#ffcd6a','#ffa85c'], ['#82b1ff','#665fff'], ['#a0de7e','#54cb68'], ['#53edd6','#28c9b7'], ['#72d5fd','#2a9ef1'], ['#e0a2f3','#d669ed'], ['#ffa8cf','#ff6fae']];
+const AVATAR_NAMES = ['Красный', 'Оранжевый', 'Фиолетовый', 'Зелёный', 'Бирюзовый', 'Голубой', 'Сиреневый', 'Розовый'];
+function drawAvatar(ctx, cx, cy, r, P){
+  P = P || S.profile;
+  const mode = P._avatarMode || 'profile';
+  const src = mode === 'custom' ? P._avatar : mode === 'letter' ? null : S.profile.avatar;
+  const img = getImg(src);
   ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.clip();
   if (img){
     const s = Math.max(2*r / img.naturalWidth, 2*r / img.naturalHeight);
     ctx.drawImage(img, cx - img.naturalWidth*s/2, cy - img.naturalHeight*s/2, img.naturalWidth*s, img.naturalHeight*s);
   } else {
-    const g = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
-    g.addColorStop(0, '#ffb3d0'); g.addColorStop(1, '#8a6ae0');
+    // Telegram-style letter avatar: colour picked from the name, first letter in white
+    const name = String(P.nick || '?'); let h = 0; for (const ch of name) h = (h * 31 + ch.codePointAt(0)) >>> 0;
+    const lc = P._letterColor || 'auto';
+    const pair = /^#/.test(lc) ? [shade(lc, 0.28), lc] : (/^\d+$/.test(String(lc)) ? AVATAR_GRADS[+lc % AVATAR_GRADS.length] : AVATAR_GRADS[h % 7]);
+    const g = ctx.createLinearGradient(cx, cy - r, cx, cy + r);
+    g.addColorStop(0, pair[0]); g.addColorStop(1, pair[1]);
     ctx.fillStyle = g; ctx.fillRect(cx - r, cy - r, 2*r, 2*r);
-    ctx.fillStyle = '#fff'; ctx.font = F(700, 26); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText((Array.from(S.profile.nick || '?')[0] || '?').toUpperCase(), cx, cy + 1);
+    ctx.fillStyle = '#fff'; ctx.font = F(600, 27); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText((Array.from(name.trim())[0] || '?').toUpperCase(), cx, cy + 1);
   }
   ctx.restore();
   ctx.save(); ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.arc(cx, cy, r - 1, 0, Math.PI*2); ctx.stroke(); ctx.restore();
   ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
 }
 function drawHeader(ctx, sc, t, G){
-  const T = S.theme, P = S.profile, hy = G.headerTop;
+  const T = S.theme, P = chatOf(sc), hy = G.headerTop;
   const fade = ctx.createLinearGradient(0, hy, 0, hy + 110);
   fade.addColorStop(0, rgba(T.bg1, 0.35)); fade.addColorStop(1, rgba(T.bg1, 0));
   ctx.fillStyle = fade; ctx.fillRect(0, hy, W, 110);
@@ -1036,9 +1140,9 @@ function drawHeader(ctx, sc, t, G){
   // center pill
   const st = currentStatus(sc, t);
   ctx.font = F(700, 23); const nickW = ctx.measureText(P.nick || '').width;
-  ctx.font = F(400, 18); const bstyle = P.badgeStyle || 'text'; const badgeW = (bstyle === 'rosette' || bstyle === 'verified') ? 25 : (bstyle === 'text' && P.badge ? ctx.measureText(P.badge).width + 6 : 0);
-  const emImg = getImg(P.emojiImg);
-  ctx.font = F(400, 21); const emW = emImg ? 30 : (P.emoji ? ctx.measureText(P.emoji).width + 6 : 0);
+  ctx.font = F(400, 18); const bstyle = P.badgeStyle || 'text'; const badgeW = (bstyle === 'rosette' || bstyle === 'verified') ? 28 : (bstyle === 'file' ? (slotB ? 28 : 0) : (bstyle === 'text' && P.badge ? ctx.measureText(P.badge).width + 6 : 0));
+  const emImg = getImg(P.emojiImg); const slotB = P._noSlots ? null : slotRT.badge, slotE = P._noSlots ? null : slotRT.emoji;
+  ctx.font = F(400, 21); const emW = (slotE || emImg) ? 32 : (P.emoji ? ctx.measureText(P.emoji).width + 6 : 0);
   ctx.font = F(400, 16); const stW = ctx.measureText(st.text).width + (st.typing ? 26 : 0);
   const line1 = badgeW + nickW + emW;
   const pw = Math.min(330, Math.max(222, Math.max(line1, stW) + 64));
@@ -1046,11 +1150,13 @@ function drawHeader(ctx, sc, t, G){
   pill(ctx, px, hy + 13, pw, 64);
   let lx = W/2 - line1/2;
   ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-  if (bstyle === 'rosette'){ drawRosette(ctx, lx + 10, hy + 36, 10.5, T.pillText); lx += badgeW; }
+  if (bstyle === 'rosette'){ drawRosette(ctx, lx + 11, hy + 35.5, 12, P.badgeColor || '#3d8fe0'); lx += badgeW; }
+  else if (bstyle === 'file'){ if (drawSlot(ctx, slotB, lx - 1, hy + 23, 25, t)) lx += badgeW; }
   else if (bstyle === 'verified'){ drawVerified(ctx, lx + 10, hy + 36, 10.5); lx += badgeW; }
   else if (bstyle === 'text' && P.badge){ ctx.font = F(400, 18); ctx.fillStyle = T.pillText; ctx.fillText(P.badge, lx, hy + 43); lx += badgeW; }
   ctx.font = F(700, 23); ctx.fillStyle = T.pillText; ctx.fillText(P.nick || '', lx, hy + 44); lx += nickW + 6;
-  if (emImg){ ctx.drawImage(emImg, lx, hy + 21, 28, 28); }
+  if (slotE){ drawSlot(ctx, slotE, lx, hy + 19, 30, t); }
+  else if (emImg){ ctx.drawImage(emImg, lx, hy + 21, 28, 28); }
   else if (P.emoji){ ctx.font = F(400, 21); ctx.fillText(P.emoji, lx, hy + 44); }
   const online = st.typing || /^(в сети|online)$/i.test(String(st.text).trim());
   ctx.font = F(400, 16); ctx.fillStyle = online || !S.theme.greyAway ? T.status : T.placeholder; ctx.textAlign = 'center';
@@ -1060,7 +1166,7 @@ function drawHeader(ctx, sc, t, G){
     ctx.globalAlpha = 1; ctx.fillText(st.text, tx, hy + 67);
   } else ctx.fillText(st.text, W/2, hy + 67);
   ctx.textAlign = 'left';
-  drawAvatar(ctx, W - 58, hy + 45, 32);
+  drawAvatar(ctx, W - 58, hy + 45, 32, P);
 }
 function drawSticker(ctx, cx, cy, r, color){
   ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = 1.8; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
@@ -1077,14 +1183,13 @@ function drawMic(ctx, cx, cy, color){
   ctx.beginPath(); ctx.moveTo(cx, cy + 8.5); ctx.lineTo(cx, cy + 15); ctx.stroke();
   ctx.restore();
 }
+const CLIP_PATH = new Path2D('M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48');
 function drawClip(ctx, cx, cy, color){
-  ctx.save(); ctx.translate(cx, cy); ctx.rotate(Math.PI/4);
-  ctx.strokeStyle = color; ctx.lineWidth = 2.1; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-  ctx.beginPath();
-  ctx.moveTo(4, -2); ctx.lineTo(4, 9); ctx.arc(-1, 9, 5, 0, Math.PI); ctx.lineTo(-6, -11); ctx.arc(-0.5, -11, 5.5, Math.PI, 0); ctx.lineTo(5, 10.5);
-  ctx.arc(-1, 10.5, 6, 0, Math.PI, false);
-  ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(-1.5, -9); ctx.lineTo(-1.5, 8); ctx.stroke();
+  // classic diagonal paperclip (24-unit icon grid), thin rounded stroke
+  const sc = 1.42;
+  ctx.save(); ctx.translate(cx - 12 * sc + 0.5, cy - 12 * sc + 0.5); ctx.scale(sc, sc);
+  ctx.strokeStyle = color; ctx.lineWidth = 2.4 / sc; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.stroke(CLIP_PATH);
   ctx.restore();
 }
 function drawInput(ctx, sc, t, G){
@@ -1113,7 +1218,12 @@ function drawInput(ctx, sc, t, G){
   const cursorOn = text ? true : (t * 1.6) % 1 < 0.55;
   if (cursorOn){ ctx.fillStyle = T.accent; rr(ctx, text ? 108.5 - off + tw : 104, by - 45, 2.6, 31, 1.3); ctx.fill(); }
   ctx.restore();
-  drawSticker(ctx, 462, by - 30, 13.5, T.placeholder);
+  if (text){
+    ctx.save(); ctx.strokeStyle = T.placeholder; ctx.fillStyle = T.placeholder; ctx.lineWidth = 1.8; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.arc(462, by - 30, 13, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(457.5, by - 34, 1.7, 0, Math.PI * 2); ctx.arc(466.5, by - 34, 1.7, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(462, by - 29.5, 6.5, 0.18 * Math.PI, 0.82 * Math.PI); ctx.stroke(); ctx.restore();
+  } else drawSticker(ctx, 462, by - 30, 13.5, T.placeholder);
   circleBtn(ctx, 533, by - 30, 30, 0.08);
   if (micK > 0.01){
     ctx.save(); ctx.globalAlpha *= clamp(micK * 1.5, 0, 1);
@@ -1132,17 +1242,25 @@ function drawInput(ctx, sc, t, G){
 /* ---------- confetti, caption, watermark, outro ---------- */
 const CONF = ['#ff4d6d','#ffd23f','#3bceac','#4d96ff','#ff8c42','#c77dff','#ffffff','#ef476f','#06d6a0'];
 function drawConfetti(ctx, sc, t, G){
+  const rise = S.video.msgAnim !== 'ios26';
   for (const b of sc.bursts){
-    const dt = t - b.t; if (dt < 0 || dt > 2.4) continue;
+    const dt = t - b.t; if (dt < 0 || dt > 2.6) continue;
     const r = rng(b.seed * 997);
     const cy = G.msgBottom - 250;
-    const fadeA = dt > 1.6 ? 1 - (dt - 1.6) / 0.8 : 1;
-    for (let i = 0; i < 180; i++){
-      const top = i >= 115;
-      const a = r() * Math.PI * 2, sp = 260 + r() * 640, rx = r(), ry = r(), size = 5 + r() * 6, col = CONF[Math.floor(r() * CONF.length)], round = r() < 0.45, rot0 = r() * 6.28, rs = (r() - 0.5) * 14, delay = r() * 0.5;
+    const fadeA = dt > 1.7 ? 1 - (dt - 1.7) / 0.9 : 1;
+    const N = rise ? 260 : 180, topFrom = rise ? 230 : 115;
+    for (let i = 0; i < N; i++){
+      const top = i >= topFrom;
+      const a = r() * Math.PI * 2, sp0 = r(), rx = r(), ry = r(), size = 5 + r() * 6, col = CONF[Math.floor(r() * CONF.length)], round = r() < 0.55, rot0 = r() * 6.28, rs = (r() - 0.5) * 14, delay = r() * 0.5;
       let x, y;
-      if (!top){
-        const c = 2.4, f = (1 - Math.exp(-c * dt)) / c, g = 520;
+      if (!top && rise){
+        // explosion: starts packed on the gift, spreads across the screen in ~0.3 s, then drifts down slowly
+        const sp = 700 + sp0 * 1500, c = 5.5, f = (1 - Math.exp(-c * dt)) / c, g = 170;
+        const spread = Math.sqrt(rx) * 70;
+        x = W/2 + Math.cos(a) * spread + Math.cos(a) * sp * f + Math.sin(dt * 2.4 + i) * 10 * Math.min(1, dt * 2);
+        y = cy + Math.sin(a) * spread * 1.2 + Math.sin(a) * sp * 1.15 * f + g * dt * dt * 0.5 + 40 * dt;
+      } else if (!top){
+        const sp = 260 + sp0 * 640, c = 2.4, f = (1 - Math.exp(-c * dt)) / c, g = 520;
         x = W/2 + (rx - 0.5) * 230 + Math.cos(a) * sp * f;
         y = cy + (ry - 0.5) * 240 + (Math.sin(a) * sp - 380) * f + g / c * (dt - f);
       } else {
@@ -1151,7 +1269,7 @@ function drawConfetti(ctx, sc, t, G){
         x = rx * W + Math.sin(d2 * 3 + i) * 14;
         y = G.R.y - 20 + d2 * (180 + ry * 170);
       }
-      if (y > G.R.y + G.R.h + 20 || y < G.R.y - 30) continue;
+      if (y > G.R.y + G.R.h + 20 || y < G.R.y - 30 || x < -20 || x > W + 20) continue;
       const rot = rot0 + rs * dt;
       ctx.save(); ctx.globalAlpha = clamp(fadeA, 0, 1); ctx.translate(x, y); ctx.rotate(rot); ctx.scale(1, Math.abs(Math.cos(rot * 1.3)) * 0.8 + 0.2);
       ctx.fillStyle = col;
@@ -1163,14 +1281,17 @@ function drawConfetti(ctx, sc, t, G){
 function drawCaption(ctx, text, G){
   if (!text) return;
   const size = +S.video.captionSize || 30;
-  ctx.font = F(600, size);
-  const lines = wrapText(ctx, text, W - 40);
-  ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; ctx.lineJoin = 'round';
-  const lh = size * 1.18;
-  const baseY = G.lb ? G.R.y - 10 - (lines.length - 1) * lh : 66;
+  const capFam = `"TikTok Sans", ${fam()}`;
+  ctx.font = `600 ${size}px ${capFam}`;
+  const lines = wrapText(ctx, text, W - 44);
+  ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; ctx.lineJoin = 'round'; ctx.miterLimit = 2;
+  const lh = size * 1.16;
+  let baseY;
+  if (S.video.captionPos === 'center') baseY = G.R.y + G.R.h * (+S.video.captionY || 0.5) - (lines.length - 1) * lh / 2 + size * 0.35;
+  else baseY = G.lb ? G.R.y - 10 - (lines.length - 1) * lh : 66;
   lines.forEach((l, i) => {
     const y = baseY + i * lh;
-    ctx.strokeStyle = 'rgba(0,0,0,0.95)'; ctx.lineWidth = Math.max(3, size * 0.12); ctx.strokeText(l, W/2, y);
+    ctx.strokeStyle = 'rgba(0,0,0,0.96)'; ctx.lineWidth = Math.max(3, size * 0.13); ctx.strokeText(l, W/2, y);
     ctx.fillStyle = S.video.captionColor; ctx.fillText(l, W/2, y);
   });
   ctx.textAlign = 'left';
@@ -1196,8 +1317,8 @@ function drawOutro(ctx, dt){
   const jitter = glitch ? (Math.sin(dt * 90) * 9 * glitch) : 0;
   ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
   if (S.video.outroText){ ctx.font = F(600, 22); ctx.fillStyle = 'rgba(255,255,255,0.62)'; ctx.fillText(S.video.outroText, W/2, 420); }
-  ctx.font = F(800, 48);
-  let s = 48; while (ctx.measureText(handle).width > W - 60 && s > 20){ s -= 2; ctx.font = F(800, s); }
+  const oFam = `"TikTok Sans", ${fam()}`; ctx.font = `800 48px ${oFam}`;
+  let s = 48; while (ctx.measureText(handle).width > W - 60 && s > 20){ s -= 2; ctx.font = `800 ${s}px ${oFam}`; }
   ctx.globalCompositeOperation = 'lighter';
   ctx.fillStyle = '#7c5cff'; ctx.fillText(handle, W/2 - 3 - jitter, 492);
   ctx.fillStyle = '#3fd9a8'; ctx.fillText(handle, W/2 + 3 + jitter, 492);
@@ -1325,12 +1446,15 @@ function drawKeyboard(ctx, sc, t, G, k){
   ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
 }
 
+let renderT = 0;
 function render(ctx, t, k){
+  renderT = t;
   ctx.setTransform(k, 0, 0, k, 0, 0);
   ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
   ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
   if (TL.outro && t >= TL.outro.start){ drawOutro(ctx, t - TL.outro.start); return; }
   const sc = sceneAt(t), G = geom();
+  renderChat = chatOf(sc);
   const kbk = kbAmount(sc, t);
   if (kbk > 0){ const lift = (KB_H - 4) * kbk; G.inputBottom -= lift; G.msgBottom -= lift; }
   ctx.save(); ctx.beginPath(); ctx.rect(G.R.x, G.R.y, G.R.w, G.R.h); ctx.clip();
@@ -1568,26 +1692,73 @@ async function renderLottieStill(data, frame){
     a.destroy(); return c;
   } finally { box.remove(); }
 }
-async function setLottie(data, name){
+async function buildLottieAsset(data, name){
   data = JSON.parse(JSON.stringify(data));
   if (!(await ensureLottie())) throw new Error('Не загрузился проигрыватель анимаций. Проверьте интернет и обновите страницу.');
-  if (giftAsset && giftAsset.anim) try { giftAsset.anim.destroy(); } catch(e) {}
-  const box = $('#lottieBox'); box.innerHTML = '';
   const frag = splitFragmentLottie(data);
+  const box = document.createElement('div'); box.style.cssText = 'position:absolute;left:0;top:0;width:360px;height:360px'; $('#lottieBox').appendChild(box);
   const anim = window.lottie.loadAnimation({container: box, renderer: 'canvas', loop: false, autoplay: false, animationData: frag ? frag.model : data, rendererSettings: {clearCanvas: true, preserveAspectRatio: 'xMidYMid meet'}});
   await new Promise(res => { let done = false; const fin = () => { if (!done){ done = true; res(); } }; anim.addEventListener('DOMLoaded', fin); setTimeout(fin, 1500); });
-  const canvas = box.querySelector('canvas');
-  giftAsset = {kind:'lottie', data, anim, canvas, name: name || 'анимация', frag: !!frag, exact: false, patternImg: null};
+  const asset = {kind:'lottie', data, anim, box, canvas: box.querySelector('canvas'), name: name || 'анимация', frag: !!frag, exact: false, patternImg: null, colors: null};
   if (frag){
-    if (frag.center && frag.edge){
-      giftAsset.exact = true;
-      S.gift.center = frag.center; S.gift.edge = frag.edge; S.gift.ribbonColor = shade(frag.edge, -0.24);
-      S.gift.pattern = frag.patternColor || shade(frag.edge, -0.26);
-    }
-    if (frag.pattern){ try { giftAsset.patternImg = await renderLottieStill(frag.pattern, 0); } catch(e) { console.warn('pattern', e); } }
-    if (data.nm){ const p = parseNft(data.nm); if (p && !S.gift.collection) { S.gift.collection = p.pretty; S.gift.number = p.num; } }
-    syncFields(); onChange();
+    if (frag.center && frag.edge){ asset.exact = true; asset.colors = {center: frag.center, edge: frag.edge, ribbonColor: shade(frag.edge, -0.24), pattern: frag.patternColor || shade(frag.edge, -0.26)}; }
+    if (frag.pattern){ try { asset.patternImg = await renderLottieStill(frag.pattern, 0); } catch(e) { console.warn('pattern', e); } }
   }
+  return asset;
+}
+function destroyAsset(a){ if (a && a.anim){ try { a.anim.destroy(); } catch(e) {} if (a.box) a.box.remove(); } }
+const giftBundles = new Map();
+function normLink(v){ const p = parseNft(v); return p ? p.fSlug : String(v || '').trim().toLowerCase(); }
+async function loadGiftBundle(link, force){
+  const key = normLink(link), p = parseNft(link);
+  if (!p) return null;
+  const have = giftBundles.get(key);
+  if (have && !force && (have.status === 'ok' || have.status === 'loading')) return have;
+  if (have) destroyAsset(have.asset);
+  const b = {status:'loading', asset:null, meta:{collection: p.pretty, number: p.num, model:'', backdrop:'', symbol:''}};
+  giftBundles.set(key, b); updateGiftRows(); requestDraw();
+  const base = `https://nft.fragment.com/gift/${p.fSlug}`;
+  const metaP = fetchMeta(base);
+  try {
+    let data = null;
+    try { data = await (await fetchWithTimeout(base + '.lottie.json', 15000)).json(); }
+    catch(e){ const buf = await (await fetchWithTimeout(base + '.tgs', 12000)).arrayBuffer(); const u8 = new Uint8Array(buf); data = JSON.parse((u8[0] === 0x1f && u8[1] === 0x8b) ? await gunzip(buf) : new TextDecoder().decode(u8)); }
+    b.asset = await buildLottieAsset(data, p.pretty + ' #' + p.num);
+    if (b.asset.colors) Object.assign(b.meta, b.asset.colors);
+    b.status = 'ok';
+  } catch(e){ console.warn('gift bundle', link, e); b.status = 'err'; }
+  updateGiftRows(); requestDraw();
+  const meta = await metaP;
+  if (meta && Array.isArray(meta.attributes)){
+    for (const a of meta.attributes){
+      const k = String(a.trait_type || '').toLowerCase(), v = a.value != null ? String(a.value) : '';
+      if (k.includes('model')) b.meta.model = v; else if (k.includes('backdrop')) b.meta.backdrop = v; else if (k.includes('symbol') || k.includes('pattern')) b.meta.symbol = v;
+    }
+    if (!b.asset || !b.asset.exact){ const bd = Object.keys(BACKDROPS).find(x => x.toLowerCase() === String(b.meta.backdrop).toLowerCase()); if (bd){ const [c, e] = BACKDROPS[bd]; Object.assign(b.meta, {center: c, edge: e, pattern: shade(e, -0.26), ribbonColor: shade(e, -0.24)}); } }
+  }
+  b.metaDone = true;
+  updateGiftRows(); requestDraw();
+  return b;
+}
+function updateGiftRows(){
+  document.querySelectorAll('[data-gift-link]').forEach(el => {
+    const v = el.dataset.giftLink, b = v ? giftBundles.get(normLink(v)) : null;
+    if (!v){ el.textContent = 'подарок из раздела «NFT-подарок»'; el.className = 'gstat'; return; }
+    if (!parseNft(v)){ el.textContent = 'не похоже на ссылку t.me/nft/…'; el.className = 'gstat err'; return; }
+    if (!b || b.status === 'loading'){ el.textContent = 'загружаю…'; el.className = 'gstat'; return; }
+    if (b.status === 'err'){ el.textContent = 'анимация не загрузилась — откройте сайт не внутри Claude'; el.className = 'gstat err'; return; }
+    const m = b.meta; el.textContent = `${m.collection} #${fmtNum(m.number)}` + (m.model ? ` · ${m.model} · ${m.backdrop} · ${m.symbol}` : (b.metaDone ? '' : ' · названия подтягиваются…'));
+    el.className = 'gstat ok';
+  });
+}
+function loadAllGiftLinks(){ for (const sc of S.scenes) for (const ev of sc.events || []) if (ev.type === 'gift' && ev.nft && parseNft(ev.nft)) loadGiftBundle(ev.nft); }
+async function setLottie(data, name){
+  const asset = await buildLottieAsset(data, name);
+  if (giftAsset) destroyAsset(giftAsset);
+  giftAsset = asset;
+  if (asset.colors && S.gift.autoColors){ Object.assign(S.gift, asset.colors); }
+  if (asset.frag && asset.data && asset.data.nm){ const p = parseNft(asset.data.nm); if (p && !S.gift.collection){ S.gift.collection = p.pretty; S.gift.number = p.num; } }
+  syncFields(); onChange();
   saveAsset(); updateAssetLine(); requestDraw();
 }
 async function setImageModel(src, name){
@@ -1693,7 +1864,7 @@ document.querySelectorAll('input[data-img]').forEach(inp => {
     inp.value = '';
   });
 });
-document.querySelectorAll('[data-clear]').forEach(b => b.addEventListener('click', () => { setPath(S, b.dataset.clear, null); onChange(); }));
+document.querySelectorAll('[data-clear]').forEach(b => b.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); setPath(S, b.dataset.clear, null); onChange(); }));
 
 // presets
 (function(){
@@ -1732,6 +1903,28 @@ function renderScenes(){
     g2.appendChild(mkField('Подпись сверху', sc.caption, v => { sc.caption = v; onChange(); }, () => seek(TL.scenes[si].start + 0.3)));
     g2.appendChild(mkField('Статус в шапке', sc.status, v => { sc.status = v; onChange(); }, () => seek(TL.scenes[si].start + 0.3)));
     card.appendChild(g2);
+    const g3 = el('div', 'grid3');
+    const nf = mkField('Чат с (ник)', sc.nick || '', v => { sc.nick = v; onChange(); }, () => seek(TL.scenes[si].start + 0.3));
+    nf.querySelector('input').placeholder = S.profile.nick || 'из профиля';
+    g3.appendChild(nf);
+    const al = el('label', 'f'); al.textContent = 'Аватар';
+    const asel = document.createElement('select');
+    [['profile', 'Как в профиле'], ['letter', 'Без фото — буква'], ['custom', 'Своё фото…']].forEach(([v, l]) => { const o = document.createElement('option'); o.value = v; o.textContent = l; asel.appendChild(o); });
+    asel.value = sc.avatarMode || 'profile';
+    const afile = document.createElement('input'); afile.type = 'file'; afile.accept = 'image/*'; afile.hidden = true;
+    asel.addEventListener('change', () => { if (asel.value === 'custom' && !sc.avatar){ afile.click(); } sc.avatarMode = asel.value; onChange(); seek(TL.scenes[si].start + 0.3); });
+    afile.addEventListener('change', async () => { const f = afile.files && afile.files[0]; if (!f) return; sc.avatar = await downscale(await fileToDataURL(f), 256); sc.avatarMode = 'custom'; asel.value = 'custom'; onChange(); });
+    al.appendChild(asel); al.appendChild(afile);
+    const lcl = el('span', 'hint'); lcl.textContent = 'Цвет кружка с буквой';
+    al.appendChild(lcl);
+    al.appendChild(letterSwatches(() => sc.letterColor || 'auto', v => { sc.letterColor = v; onChange(); seek(TL.scenes[si].start + 0.3); }));
+    if ((sc.avatarMode || 'profile') === 'custom'){ const ch = el('button', 'btn small ghost', 'Сменить фото'); ch.type = 'button'; ch.addEventListener('click', e => { e.preventDefault(); afile.click(); }); al.appendChild(ch); }
+    g3.appendChild(al);
+    const bl = el('label', 'toggle'); const bc = document.createElement('input'); bc.type = 'checkbox'; bc.checked = sc.badges !== false;
+    bc.addEventListener('change', () => { sc.badges = bc.checked; onChange(); seek(TL.scenes[si].start + 0.3); });
+    bl.appendChild(bc); bl.appendChild(document.createTextNode('Значок и эмодзи у ника'));
+    g3.appendChild(bl);
+    card.appendChild(g3);
     const list = el('div'); list.style.display = 'grid'; list.style.gap = '6px';
     (sc.events || []).forEach((ev, ei) => list.appendChild(mkEventRow(sc, si, ev, ei)));
     card.appendChild(list);
@@ -1749,8 +1942,26 @@ function renderScenes(){
     card.appendChild(add);
     box.appendChild(card);
   });
+  updateGiftRows();
 }
-function newEvent(type){ return type === 'out' ? {type, text:'новое сообщение'} : type === 'in' ? {type, text:'ответ'} : type === 'status' ? {type, text:'в сети'} : {type, dur: type === 'gift' ? 1.8 : 1}; }
+
+function letterSwatches(get, set){
+  const wrap = el('div', 'swatches');
+  const mk = (val, bg, title) => {
+    const b = el('button', 'sw'); b.type = 'button'; b.title = title; b.setAttribute('aria-label', title); b.style.background = bg;
+    if (String(get() || 'auto') === String(val)) b.classList.add('on');
+    b.addEventListener('click', e => { e.preventDefault(); set(val); wrap.querySelectorAll('.sw').forEach(x => x.classList.remove('on')); b.classList.add('on'); });
+    wrap.appendChild(b);
+  };
+  mk('auto', 'conic-gradient(#ff516a, #ffa85c, #54cb68, #2a9ef1, #665fff, #d669ed, #ff516a)', 'Авто по имени');
+  AVATAR_GRADS.forEach((g, i) => mk(String(i), `linear-gradient(${g[0]}, ${g[1]})`, AVATAR_NAMES[i]));
+  const ci = document.createElement('input'); ci.type = 'color'; ci.className = 'swc'; ci.title = 'Свой цвет'; ci.setAttribute('aria-label', 'Свой цвет буквы');
+  ci.value = /^#/.test(get() || '') ? get() : '#ff6fae';
+  ci.addEventListener('input', () => { set(ci.value); wrap.querySelectorAll('.sw').forEach(x => x.classList.remove('on')); });
+  wrap.appendChild(ci);
+  return wrap;
+}
+function newEvent(type){ return type === 'out' ? {type, text:'новое сообщение'} : type === 'in' ? {type, text:'ответ'} : type === 'status' ? {type, text:'в сети'} : type === 'gift' ? {type, dur:1.2, nft:''} : {type, dur:1}; }
 function mkField(label, value, onInput, onFocus){
   const l = el('label', 'f'); l.textContent = label;
   const i = document.createElement('input'); i.type = 'text'; i.value = value || '';
@@ -1765,7 +1976,21 @@ function mkEventRow(sc, si, ev, ei){
   sel.addEventListener('change', () => { const keepText = ev.text; sc.events[ei] = newEvent(sel.value); if (keepText && ['out','in','status'].includes(sel.value)) sc.events[ei].text = keepText; renderScenes(); onChange(); });
   row.appendChild(sel);
   const focusSeek = () => { const t0 = (TL.evTimes[si] || [])[ei]; if (t0 != null) seek(t0 + (ev.type === 'out' ? Math.min(2.5, 0.3 + (ev.text||'').length * S.video.typeSpeed) : 0.7)); };
-  if (['out','in','status'].includes(ev.type)){
+  if (ev.type === 'gift'){
+    const w = el('div', 'giftrow');
+    const li = document.createElement('input'); li.type = 'text'; li.value = ev.nft || ''; li.placeholder = 'ссылка t.me/nft/… (пусто — основной подарок)'; li.setAttribute('aria-label', 'Ссылка на NFT для этого подарка'); li.spellcheck = false;
+    const du = document.createElement('input'); du.type = 'number'; du.min = '0.3'; du.step = '0.1'; du.value = ev.dur ?? 1.5; du.title = 'сек на экране'; du.setAttribute('aria-label', 'Секунд на экране');
+    const stat = el('div', 'gstat'); stat.dataset.giftLink = ev.nft || '';
+    let tm = null;
+    const commit = () => { ev.nft = li.value.trim(); stat.dataset.giftLink = ev.nft; onChange(); updateGiftRows(); if (parseNft(ev.nft)) loadGiftBundle(ev.nft); };
+    li.addEventListener('input', () => { clearTimeout(tm); tm = setTimeout(commit, 600); });
+    li.addEventListener('paste', () => { clearTimeout(tm); tm = setTimeout(commit, 60); });
+    li.addEventListener('focus', focusSeek);
+    du.addEventListener('input', () => { ev.dur = parseFloat(du.value) || 0.3; onChange(); });
+    du.addEventListener('focus', focusSeek);
+    w.appendChild(li); w.appendChild(du); row.appendChild(w);
+    row._stat = stat;
+  } else if (['out','in','status'].includes(ev.type)){
     const i = document.createElement('input'); i.type = 'text'; i.value = ev.text || ''; i.setAttribute('aria-label', 'Текст');
     i.addEventListener('input', () => { ev.text = i.value; onChange(); });
     i.addEventListener('focus', focusSeek);
@@ -1790,8 +2015,29 @@ function mkEventRow(sc, si, ev, ei){
   });
   row.appendChild(tools);
   row.addEventListener('click', e => { if (e.target === row) focusSeek(); });
+  if (row._stat) row.appendChild(row._stat);
   return row;
 }
+$('#tplSpam').addEventListener('click', () => {
+  S.scenes = [{ caption:'ну не хочу я с ним дружить😭', status:'в сети', hold:1.2, events:[
+    {type:'gift', dur:1.1, nft:'https://t.me/nft/ScaredCat-18477'},
+    {type:'gift', dur:1.1, nft:'https://t.me/nft/JollyChimp-69955'},
+    {type:'gift', dur:1.1, nft:'https://t.me/nft/SakuraFlower-25579'},
+    {type:'typing', dur:0.8}, {type:'in', text:'го дружить пж...'}, {type:'out', text:'нет...'} ]}];
+  S.video.captionPos = 'center'; S.video.captionY = 0.5; S.video.captionSize = 36; S.profile.checks = 'read';
+  renderScenes(); syncFields(); onChange(); loadAllGiftLinks(); seek(1.8);
+});
+$('#tplMom').addEventListener('click', () => {
+  S.scenes = [
+    { caption:'Как я отвечаю маме:', status:'был(а) недавно', hold:0.8, nick:'Мама', avatarMode:'letter', badges:false, events:[
+      {type:'in', text:'ты поел?'}, {type:'out', text:'да'} ]},
+    { caption:'Как я отвечаю missed:', status:'в сети', hold:1.2, avatarMode:'profile', badges:true, events:[
+      {type:'in', text:'чем занят?'}, {type:'out', text:'привет!! ничем, а ты как? 🥺'}, {type:'gift', dur:1.6, nft:''} ]}
+  ];
+  S.video.captionPos = 'top'; S.video.captionSize = 31;
+  renderScenes(); syncFields(); onChange(); seek(1.5);
+});
+$('#tplAsk').addEventListener('click', () => { S.scenes = clone(DEFAULT.scenes); S.video.captionPos = 'top'; S.video.captionSize = 31; renderScenes(); syncFields(); onChange(); seek(3); });
 $('#addScene').addEventListener('click', () => { S.scenes.push({caption:'Новая сцена:', status:'в сети', hold:1, events:[{type:'out', text:'привет'}]}); renderScenes(); onChange(); seek(TL.scenes[TL.scenes.length-1].start + 0.4); });
 function renderMarks(){
   const box = $('#marks'); box.innerHTML = '';
@@ -1810,6 +2056,14 @@ $('#btnMute').addEventListener('click', () => {
 document.addEventListener('keydown', e => { if (e.code === 'Space' && !/INPUT|TEXTAREA|SELECT|BUTTON/.test(document.activeElement.tagName)){ e.preventDefault(); playing ? pause() : play(); } });
 
 /* ---------- gift UI ---------- */
+['badge', 'emoji'].forEach(n => {
+  $('#' + n + 'FileIn').addEventListener('change', async e => {
+    const f = e.target.files && e.target.files[0]; e.target.value = '';
+    if (!f) return;
+    try { await handleSlotFile(n, f); } catch(err){ console.warn(err); $('#' + n + 'FileName').textContent = 'не получилось прочитать «' + f.name + '»'; }
+  });
+  $('#' + n + 'FileClear').addEventListener('click', e => { e.preventDefault(); S.profile[n + 'File'] = null; if (n === 'badge' && S.profile.badgeStyle === 'file') S.profile.badgeStyle = 'rosette'; syncFields(); onChange(); buildSlot(n); updateSlotNames(); });
+});
 $('#nftLoad').addEventListener('click', loadNftById);
 $('#nftIn').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); loadNftById(); } });
 async function handleGiftFiles(list){
@@ -1829,7 +2083,7 @@ const drop = $('#drop');
 ['dragenter','dragover'].forEach(n => drop.addEventListener(n, e => { e.preventDefault(); drop.classList.add('over'); }));
 ['dragleave','drop'].forEach(n => drop.addEventListener(n, e => { e.preventDefault(); drop.classList.remove('over'); }));
 drop.addEventListener('drop', e => { if (e.dataTransfer.files && e.dataTransfer.files.length) handleGiftFiles(e.dataTransfer.files); });
-$('#assetReset').addEventListener('click', () => { if (giftAsset && giftAsset.anim) try { giftAsset.anim.destroy(); } catch(e) {} giftAsset = null; saveAsset(); updateAssetLine(); requestDraw(); });
+$('#assetReset').addEventListener('click', () => { destroyAsset(giftAsset); giftAsset = null; saveAsset(); updateAssetLine(); requestDraw(); });
 
 /* ---------- music ---------- */
 $('#musicIn').addEventListener('change', async e => {
@@ -1868,7 +2122,7 @@ $('#projIn').addEventListener('change', async e => {
     S = deepMerge(clone(DEFAULT), j.state || j);
     if (Array.isArray((j.state || j).scenes)) S.scenes = (j.state || j).scenes;
     giftAsset = null; await restoreAsset(j.asset);
-    updateAssetLine(); renderScenes(); syncFields(); onChange();
+    updateAssetLine(); renderScenes(); syncFields(); onChange(); loadAllGiftLinks();
   } catch(err){ setStatus('err', 'Файл проекта не прочитался.'); }
   e.target.value = '';
 });
@@ -2026,7 +2280,7 @@ async function encodeRecorder(canvas, ctx, k, fps, audioBuf, signal){
 async function fontsReady(){
   if (!document.fonts || !document.fonts.load) return;
   const f = S.theme.font === 'iOS' ? 'Inter' : S.theme.font, sample = 'Привет abc 0123';
-  try { await Promise.race([Promise.all([400,500,600,700,800].map(w => document.fonts.load(`${w} 20px "${f}"`, sample))), sleep(4000)]); } catch(e) {}
+  try { await Promise.race([Promise.all([400,500,600,700,800].map(w => document.fonts.load(`${w} 20px "${f}"`, sample)).concat([600,800].map(w => document.fonts.load(`${w} 30px "TikTok Sans"`, sample + '😭')))), sleep(4000)]); } catch(e) {}
 }
 compile();
 renderScenes();
@@ -2037,5 +2291,8 @@ fontsReady().then(() => { wrapCache.clear(); requestDraw(); });
 document.querySelector('[data-path="theme.font"]').addEventListener('change', () => fontsReady().then(() => { wrapCache.clear(); requestDraw(); }));
 try { const a = JSON.parse(localStorage.getItem(LS_KEY + '-asset') || 'null'); if (a) restoreAsset(a); } catch(e) {}
 { const p = parseNft(S.gift.input); if (p) showLinks(p); }
+loadAllGiftLinks();
+buildSlot('badge'); buildSlot('emoji'); updateSlotNames();
+$('#profLetter').appendChild(letterSwatches(() => S.profile.letterColor || 'auto', v => { S.profile.letterColor = v; onChange(); }));
 </script>
 </body></html>
