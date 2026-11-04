@@ -779,7 +779,8 @@ function drawModel(ctx, cx, cy, size, dt){
     try {
       const fr = a.anim.frameRate || 60, total = Math.max(1, a.anim.totalFrames);
       a.anim.goToAndStop(Math.floor(Math.max(0, dt) * fr) % total, true);
-      ctx.drawImage(a.canvas, cx - size/2, cy - size/2, size, size);
+      const fs = a.frag ? size * 2.2 : size;   // fragment's frame is 512 px with the model in its middle ~40 %
+      ctx.drawImage(a.canvas, cx - fs/2, cy - fs/2 + (a.frag ? 8 : 0), fs, fs);
       return;
     } catch(e) {}
   }
@@ -816,7 +817,11 @@ function drawGift(ctx, it, L, y, t, k){
   const bg = ctx.createRadialGradient(cx, iy + 100, 10, cx, iy + 100, Math.max(iw, ih) * 0.75);
   bg.addColorStop(0, g.center); bg.addColorStop(1, g.edge);
   ctx.fillStyle = bg; ctx.fillRect(ix, iy, iw, ih);
-  if (g.showPattern){ const pc = getPattern(k, iw, ih); ctx.drawImage(pc, ix, iy, iw, ih); }
+  if (g.showPattern){
+    const pimg = giftAsset && giftAsset.patternImg;
+    if (pimg){ const ps = iw * 1.42 * (+g.modelScale || 1); ctx.drawImage(pimg, cx - ps/2, iy + 100 - ps/2, ps, ps); }
+    else { const pc = getPattern(k, iw, ih); ctx.drawImage(pc, ix, iy, iw, ih); }
+  }
   if (g.ribbon){
     ctx.save(); ctx.translate(ix + iw - 29, iy + 29); ctx.rotate(Math.PI/4);
     ctx.fillStyle = g.ribbonColor; ctx.fillRect(-70, -10.5, 140, 21);
@@ -1466,6 +1471,7 @@ function applyMeta(j){
 }
 function applyBackdropColors(){
   if (!S.gift.autoColors) return false;
+  if (giftAsset && giftAsset.exact) return false;
   const name = String(S.gift.backdrop || '').trim().toLowerCase();
   const key = Object.keys(BACKDROPS).find(k => k.toLowerCase() === name);
   if (!key) return false;
@@ -1473,22 +1479,46 @@ function applyBackdropColors(){
   S.gift.center = c; S.gift.edge = e; S.gift.pattern = shade(e, -0.26); S.gift.ribbonColor = shade(e, -0.24);
   return true;
 }
+async function fetchMeta(base){
+  // fragment's attribute file is not shared with other sites, so fall back to a public CORS relay for it
+  const tries = [
+    () => fetchWithTimeout(base + '.json', 5000).then(r => r.json()),
+    () => fetchWithTimeout('https://api.allorigins.win/raw?url=' + encodeURIComponent(base + '.json'), 20000).then(r => r.json()),
+    () => fetchWithTimeout('https://api.allorigins.win/get?url=' + encodeURIComponent(base + '.json'), 20000).then(r => r.json()).then(j => JSON.parse(j.contents))
+  ];
+  for (const f of tries){ try { const j = await f(); if (j && (j.attributes || j.name)) return j; } catch(e) {} }
+  return null;
+}
+let nftRun = 0;
 async function loadNftById(){
   const p = parseNft(S.gift.input);
   if (!p){ setStatus('err', 'Не получилось разобрать ссылку. Пример: <code>t.me/nft/SakuraFlower-25579</code> или <code>Sakura Flower #25579</code>.'); showLinks(null); $('#nftSteps').hidden = true; return; }
+  const run = ++nftRun;
   S.gift.collection = p.pretty; S.gift.number = p.num; syncFields(); onChange();
   showLinks(p);
-  setStatus('', 'Ищу подарок…'); $('#nftSteps').hidden = true;
+  setStatus('', `Загружаю ${esc(p.pretty)} #${fmtNum(p.num)}…`); $('#nftSteps').hidden = true;
   const base = `https://nft.fragment.com/gift/${p.fSlug}`;
-  let gotMeta = false, gotAnim = false;
-  try { const r = await fetchWithTimeout(base + '.json', 8000); gotMeta = applyMeta(await r.json()); } catch(e) {}
-  try { const r = await fetchWithTimeout(base + '.lottie.json', 12000); await setLottie(await r.json(), p.pretty + ' #' + p.num); gotAnim = true; }
+  const metaP = fetchMeta(base);
+  let gotAnim = false;
+  try { const r = await fetchWithTimeout(base + '.lottie.json', 15000); await setLottie(await r.json(), p.pretty + ' #' + p.num); gotAnim = true; }
   catch(e){
-    try { const r = await fetchWithTimeout(base + '.webp', 8000); const url = await fileToDataURL(await r.blob()); await setImageModel(url, p.pretty + ' #' + p.num); gotAnim = true; } catch(_) {}
+    try { const r = await fetchWithTimeout(base + '.tgs', 12000); const buf = await r.arrayBuffer(); const u8 = new Uint8Array(buf); const txt = (u8[0] === 0x1f && u8[1] === 0x8b) ? await gunzip(buf) : new TextDecoder().decode(u8); await setLottie(JSON.parse(txt), p.pretty + ' #' + p.num); gotAnim = true; }
+    catch(_){
+      try { const r = await fetchWithTimeout(base + '.webp', 8000); const url = await fileToDataURL(await r.blob()); await setImageModel(url, p.pretty + ' #' + p.num); gotAnim = true; } catch(__) {}
+    }
   }
-  $('#nftSteps').hidden = gotAnim;
-  if (gotAnim) setStatus('ok', `Готово: ${esc(p.pretty)} #${fmtNum(p.num)}${gotMeta ? ' — модель, фон и узор подставлены.' : '. Атрибуты впишите вручную, если нужно.'}`);
-  else setStatus('ok', `<b>${esc(p.pretty)} #${fmtNum(p.num)}</b> — название и номер уже в карточке. Анимацию эта страница сама скачать не может, поэтому два шага ниже.`);
+  if (run !== nftRun) return;
+  if (!gotAnim){
+    $('#nftSteps').hidden = false;
+    setStatus('ok', `<b>${esc(p.pretty)} #${fmtNum(p.num)}</b> — название и номер уже в карточке. Анимацию отсюда скачать не получилось, поэтому два шага ниже.`);
+    metaP.then(j => { if (j && run === nftRun) applyMeta(j); });
+    return;
+  }
+  setStatus('ok', `Анимация, фон и узор подарка загружены. Подтягиваю названия модели, фона и узора…`);
+  const meta = await metaP;
+  if (run !== nftRun) return;
+  if (meta && applyMeta(meta)) setStatus('ok', `Готово: <b>${esc(S.gift.collection)} #${fmtNum(S.gift.number)}</b> — ${esc(S.gift.model)} · ${esc(S.gift.backdrop)} · ${esc(S.gift.symbol)}.`);
+  else setStatus('warn', `Анимация, фон и узор подарка на месте. Названия модели, фона и узора сервер сейчас не отдал — попробуйте «Загрузить» ещё раз через минуту или впишите их ниже.`);
 }
 async function gunzip(buf){
   if ('DecompressionStream' in window){
@@ -1505,14 +1535,59 @@ async function ensureLottie(){
   }
   return false;
 }
+function splitFragmentLottie(data){
+  const layers = Array.isArray(data && data.layers) ? data.layers : [];
+  const gift = layers.find(l => l.nm === 'Gift'), bg = layers.find(l => l.nm === 'Background');
+  if (!gift || !bg) return null;
+  const out = {};
+  const findDeep = (o, ty) => { if (!o || typeof o !== 'object') return null; if (o.ty === ty) return o; for (const k in o){ const r = findDeep(o[k], ty); if (r) return r; } return null; };
+  const toHex = (a, i) => rgb2hex(a[i] * 255, a[i+1] * 255, a[i+2] * 255);
+  const gf = findDeep(bg.shapes, 'gf');
+  if (gf && gf.g && gf.g.k && Array.isArray(gf.g.k.k)){
+    const k = gf.g.k.k, n = gf.g.p || 2;
+    out.center = toHex(k, 1); out.edge = toHex(k, (n - 1) * 4 + 1);
+  }
+  const ci = layers.find(l => l.nm === 'Color Icon');
+  const fl = ci && findDeep(ci.shapes, 'fl');
+  if (fl && fl.c && Array.isArray(fl.c.k)) out.patternColor = toHex(fl.c.k, 0);
+  // lottie-web rewrites the data it is given, so each player gets its own deep copy
+  const copy = o => JSON.parse(JSON.stringify(o));
+  const model = copy(Object.assign({}, data, {layers: [gift]}));
+  const patLayers = layers.filter(l => l.nm === 'Pattern' || l.nm === 'Color Icon');
+  out.pattern = patLayers.length === 2 ? copy(Object.assign({}, data, {layers: patLayers})) : null;
+  out.model = model;
+  return out;
+}
+async function renderLottieStill(data, frame){
+  const box = document.createElement('div'); box.style.cssText = 'position:fixed;left:-10000px;top:0;width:512px;height:512px;pointer-events:none'; document.body.appendChild(box);
+  try {
+    const a = window.lottie.loadAnimation({container: box, renderer: 'canvas', loop: false, autoplay: false, animationData: data, rendererSettings: {clearCanvas: true}});
+    await new Promise(res => { let done = false; const fin = () => { if (!done){ done = true; res(); } }; a.addEventListener('DOMLoaded', fin); setTimeout(fin, 1200); });
+    a.goToAndStop(frame || 0, true);
+    const src = box.querySelector('canvas'); const c = document.createElement('canvas'); c.width = src.width; c.height = src.height; c.getContext('2d').drawImage(src, 0, 0);
+    a.destroy(); return c;
+  } finally { box.remove(); }
+}
 async function setLottie(data, name){
+  data = JSON.parse(JSON.stringify(data));
   if (!(await ensureLottie())) throw new Error('Не загрузился проигрыватель анимаций. Проверьте интернет и обновите страницу.');
   if (giftAsset && giftAsset.anim) try { giftAsset.anim.destroy(); } catch(e) {}
   const box = $('#lottieBox'); box.innerHTML = '';
-  const anim = window.lottie.loadAnimation({container: box, renderer: 'canvas', loop: false, autoplay: false, animationData: data, rendererSettings: {clearCanvas: true, preserveAspectRatio: 'xMidYMid meet'}});
+  const frag = splitFragmentLottie(data);
+  const anim = window.lottie.loadAnimation({container: box, renderer: 'canvas', loop: false, autoplay: false, animationData: frag ? frag.model : data, rendererSettings: {clearCanvas: true, preserveAspectRatio: 'xMidYMid meet'}});
   await new Promise(res => { let done = false; const fin = () => { if (!done){ done = true; res(); } }; anim.addEventListener('DOMLoaded', fin); setTimeout(fin, 1500); });
   const canvas = box.querySelector('canvas');
-  giftAsset = {kind:'lottie', data, anim, canvas, name: name || 'анимация'};
+  giftAsset = {kind:'lottie', data, anim, canvas, name: name || 'анимация', frag: !!frag, exact: false, patternImg: null};
+  if (frag){
+    if (frag.center && frag.edge){
+      giftAsset.exact = true;
+      S.gift.center = frag.center; S.gift.edge = frag.edge; S.gift.ribbonColor = shade(frag.edge, -0.24);
+      S.gift.pattern = frag.patternColor || shade(frag.edge, -0.26);
+    }
+    if (frag.pattern){ try { giftAsset.patternImg = await renderLottieStill(frag.pattern, 0); } catch(e) { console.warn('pattern', e); } }
+    if (data.nm){ const p = parseNft(data.nm); if (p && !S.gift.collection) { S.gift.collection = p.pretty; S.gift.number = p.num; } }
+    syncFields(); onChange();
+  }
   saveAsset(); updateAssetLine(); requestDraw();
 }
 async function setImageModel(src, name){
