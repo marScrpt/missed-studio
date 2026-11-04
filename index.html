@@ -148,6 +148,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .gstat{font-size:12px;color:var(--muted);grid-column:2/-1;margin-top:-2px}
 .gstat.ok{color:#9fe3c8}.gstat.err{color:var(--err)}
 .giftrow{display:grid;grid-template-columns:minmax(0,1fr) 74px;gap:6px}
+.giftnames{grid-column:2/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.giftnames input{padding:6px 9px;font-size:12.5px;background:var(--panel)}
 .swatches{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .scene .grid3,.scene .grid2{align-items:start}
 .sw{width:24px;height:24px;border-radius:50%;border:2px solid transparent;padding:0;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}
@@ -314,7 +316,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
             <div class="range"><div class="rl"><span>Стекло плашек (iOS)</span><output data-out="theme.glass"></output></div><input type="range" min="0" max="1" step="0.05" data-path="theme.glass" aria-label="Прозрачность стекла"></div>
             <label class="toggle"><input type="checkbox" data-path="theme.greyAway">Серый статус «был(а)…», синий только «в сети»</label>
           </div>
-          <label class="f">Шрифт в видео<select data-path="theme.font"><option value="iOS">Как на iPhone (SF Pro)</option><option value="Inter">Inter</option><option>Roboto</option><option>Manrope</option><option>Montserrat</option><option>Nunito</option></select></label>
+          <label class="f">Свой шрифт для чата и времени<span class="row"><span class="filebtn btn small">Выбрать .ttf / .otf / .woff2<input type="file" id="fontIn" aria-label="Файл шрифта"></span></span><span class="hint">Сейчас: <b id="fontName">нет</b>. Например, SF Pro Text, если он у тебя есть — тогда шрифт будет как в Telegram на iPhone.</span></label>
+          <label class="f">Шрифт в видео<select data-path="theme.font"><option value="iOS">Как на iPhone (SF Pro)</option><option value="custom">Свой файл шрифта ↓</option><option value="Inter">Inter</option><option>Roboto</option><option>Manrope</option><option>Montserrat</option><option>Nunito</option></select></label>
         </div>
       </details>
 
@@ -327,6 +330,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
             <label class="f">Финал, сек<input type="number" data-path="video.outroDur" min="1" max="6" step="0.1"></label>
           </div>
           <label class="toggle"><input type="checkbox" data-path="video.letterbox">Чёрные полосы сверху и снизу (как в оригинале)</label>
+          <label class="toggle"><input type="checkbox" data-path="video.autoTyping">«печатает…» в шапке перед каждым ответом собеседника</label>
           <label class="f">Как появляются сообщения<select data-path="video.msgAnim"><option value="rise">Выезжают снизу из-под поля ввода (как в роликах)</option><option value="ios26">Вылетают из поля ввода (iOS 26)</option></select></label>
           <div class="grid2">
             <label class="color"><input type="color" data-path="video.captionColor"><span>Цвет подписи сцены</span></label>
@@ -429,9 +433,9 @@ const DEFAULT = {
     ribbon:'подарок', button:'Посмотреть', service:'{ник} подарил(а) вам\nколлекционный подарок', modelScale:1
   },
   profile: { nick:'missed', letterColor:'auto', badgeStyle:'rosette', badgeColor:'#3d8fe0', badgeFile:null, emojiFile:null, badge:'✿', emoji:'💜', emojiImg:null, avatar:null, counter:67, time:'03:12', checks:'one', dateLabel:'Сегодня' },
-  theme: Object.assign({preset:'lavender', font:'iOS', bgImg:null, bgDim:0.15, glass:0.55, greyAway:false, bgStyle:'linear', bg3:'#c9b8fb'}, THEMES.lavender),
+  theme: Object.assign({preset:'lavender', font:'iOS', bgImg:null, bgDim:0.15, glass:0.55, greyAway:true, bgStyle:'linear', bg3:'#c9b8fb'}, THEMES.lavender),
   video: { res:720, fps:30, letterbox:true, captionColor:'#ffffff', captionSize:31, captionPos:'top', captionY:0.5, typeSpeed:0.055, gap:0.28,
-           sfx:true, sfxVol:0.6, musicVol:0.7, musicOffset:0, outro:true, outroDur:2.2, handle:'@missed', outroText:'подпишись', watermark:false, keyboard:false, msgAnim:'rise' },
+           sfx:true, sfxVol:0.6, musicVol:0.7, musicOffset:0, outro:true, outroDur:2.2, handle:'@missed', outroText:'подпишись', watermark:false, keyboard:false, msgAnim:'rise', autoTyping:true },
   scenes: [
     { caption:'Как просят подарки все:', status:'был(а) недавно', hold:0.5, events:[
       {type:'out', text:'дай подарок'}, {type:'out', text:'нуууу'}, {type:'out', text:'чел'}, {type:'out', text:'ясно скам'} ]},
@@ -487,7 +491,7 @@ function loadImage(src){ return new Promise((res,rej)=>{ const i = new Image(); 
 /* =========================== state =========================== */
 let S = loadState();
 function loadState(){
-  try { const raw = localStorage.getItem(LS_KEY); if (raw){ const st = deepMerge(clone(DEFAULT), JSON.parse(raw)); if (st.gift.service === 'missed подарил(а) вам\nколлекционный подарок') st.gift.service = DEFAULT.gift.service; if (st.theme.font === 'Inter') st.theme.font = 'iOS'; st.video.keyboard = false; return st; } } catch(e) {}
+  try { const raw = localStorage.getItem(LS_KEY); if (raw){ const st = deepMerge(clone(DEFAULT), JSON.parse(raw)); if (st.gift.service === 'missed подарил(а) вам\nколлекционный подарок') st.gift.service = DEFAULT.gift.service; if (st.theme.font === 'Inter') st.theme.font = 'iOS'; st.video.keyboard = false; if (!st._v3){ st.theme.greyAway = true; st._v3 = true; } return st; } } catch(e) {}
   return clone(DEFAULT);
 }
 let saveTimer = null;
@@ -540,13 +544,18 @@ function compile(){
         tl.sounds.push({t:sendAt, type:'send'});
         ct = sendAt + gap;
       } else if (ev.type === 'in'){
+        const prevEv = (sc.events || [])[ei - 1];
+        if (S.video.autoTyping !== false && !(prevEv && prevEv.type === 'typing')){
+          const d = clamp(0.5 + Array.from(ev.text || '').length * 0.04, 0.7, 1.6);
+          s.typing.push({start: ct + 0.1, end: ct + 0.1 + d}); ct += 0.1 + d;
+        }
         const at = ct + 0.25;
         addItem({kind:'in', text:ev.text||'', appear:at});
         tl.sounds.push({t:at, type:'recv'});
         ct = at + gap + 0.15;
       } else if (ev.type === 'gift'){
         const at = ct + 0.35;
-        addItem({kind:'gift', appear:at, nft: String(ev.nft || '').trim()});
+        addItem({kind:'gift', appear:at, nft: String(ev.nft || '').trim(), ov: {model: ev.model || '', backdrop: ev.backdrop || '', symbol: ev.symbol || ''}});
         s.bursts.push({t:at, seed: 77 + si*31 + ei});
         tl.sounds.push({t:at, type:'gift'});
         ct = at + Math.max(0.3, +ev.dur || 1.8);
@@ -574,10 +583,12 @@ function sceneAt(t){ let s = TL.scenes[0]; for (const sc of TL.scenes) if (t >= 
 const ICONS = {
   clip: new Path2D('M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z'),
   mic: new Path2D('M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1.2-9.1c0-.66.54-1.2 1.2-1.2.66 0 1.2.54 1.2 1.2l-.01 6.2c0 .66-.53 1.2-1.19 1.2-.66 0-1.2-.54-1.2-1.2V4.9zm6.5 6.1c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z'),
-  send: new Path2D('M2.01 21L23 12 2.01 3 2 10l15 2-15 2z')
+  send: new Path2D('M2.6 11.2 20.4 3.9c.9-.4 1.8.5 1.4 1.4l-7.3 17.8c-.4.9-1.7.9-2 0l-2.3-6.6-6.6-2.3c-.9-.3-.9-1.6 0-2zM10.9 13.2l3.8-3.8')
 };
+let customFontReady = false;
 function fam(){
   const emoji = '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji"';
+  if (S.theme.font === 'custom' && customFontReady) return `"StudioCustom", -apple-system, "Inter", Arial, sans-serif, ${emoji}`;
   if (S.theme.font === 'iOS') return `-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter", "Helvetica Neue", Arial, sans-serif, ${emoji}`;
   return `"${S.theme.font}", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif, ${emoji}`;
 }
@@ -815,9 +826,9 @@ function drawModel(ctx, cx, cy, size, dt, asset){
 }
 function resolveGift(it){
   const b = it.nft ? giftBundles.get(normLink(it.nft)) : null;
-  if (b && b.status === 'ok') return {g: Object.assign({}, S.gift, b.meta), asset: b.asset};
-  if (b) return {g: Object.assign({}, S.gift, b.meta || {}), asset: b.asset || null};
-  return {g: S.gift, asset: giftAsset};
+  const ov = {}; if (it.ov) for (const k of ['model', 'backdrop', 'symbol']) if (it.ov[k]) ov[k] = it.ov[k];
+  if (b) return {g: Object.assign({}, S.gift, b.meta || {}, ov), asset: b.asset || null};
+  return {g: Object.assign({}, S.gift, ov), asset: giftAsset};
 }
 function drawGift(ctx, it, L, y, t, k){
   const RG = resolveGift(it), g = RG.g, T = S.theme;
@@ -1169,11 +1180,19 @@ function drawHeader(ctx, sc, t, G){
   drawAvatar(ctx, W - 58, hy + 45, 32, P);
 }
 function drawSticker(ctx, cx, cy, r, color){
-  ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = 1.8; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-  const a1 = 0.02 * Math.PI, a2 = -0.5 * Math.PI;
+  // peeling sticker: round body, top-right corner lifted into a rounded point, fold line inside
+  ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = 2.3; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  const a1 = -0.55 * Math.PI, a2 = 0.06 * Math.PI;
   const p1 = [cx + Math.cos(a1) * r, cy + Math.sin(a1) * r], p2 = [cx + Math.cos(a2) * r, cy + Math.sin(a2) * r];
-  ctx.beginPath(); ctx.arc(cx, cy, r, a1, a2, false); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(p2[0], p2[1]); ctx.quadraticCurveTo(cx + r*0.3, cy - r*0.3, p1[0], p1[1]); ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, a2, a1 + 2 * Math.PI, false);
+  ctx.bezierCurveTo(p1[0] + r * 0.95, p1[1] + r * 0.1, p2[0] + r * 0.1, p2[1] - r * 0.95, p2[0], p2[1]);
+  ctx.stroke();
+  // fold: a smooth arc centred on the lifted corner
+  const kx = cx + r * 0.8, ky = cy - r * 0.8, kr = Math.hypot(p1[0] - kx, p1[1] - ky);
+  ctx.beginPath();
+  ctx.arc(kx, ky, kr, Math.atan2(p1[1] - ky, p1[0] - kx), Math.atan2(p2[1] - ky, p2[0] - kx), true);
+  ctx.stroke();
   ctx.restore();
 }
 function drawMic(ctx, cx, cy, color){
@@ -1211,9 +1230,19 @@ function drawInput(ctx, sc, t, G){
   pill(ctx, 84, by - 60, 408, 60, 0.1);
   ctx.save(); rr(ctx, 84, by - 60, 408, 60, 30); ctx.clip();
   ctx.font = F(500, 21); ctx.textBaseline = 'middle';
-  ctx.font = F(500, 21.5); const tw = ctx.measureText(text).width, maxW = 320;
+  ctx.font = F(600, 21.5); const tw = ctx.measureText(text).width, maxW = 320;
   const off = Math.max(0, tw - maxW);
-  if (text){ ctx.font = F(500, 21.5); ctx.fillStyle = luminance(T.pill) > 0.5 ? '#000000' : T.pillText; ctx.fillText(text, 107 - off, by - 29); }
+  if (text){
+    // liquid-glass shimmer: a soft light band drifts across the field while typing
+    const ph = (t * 0.55) % 1.6 - 0.3, sx = 84 + ph * 408;
+    const sh = ctx.createLinearGradient(sx - 90, by - 60, sx + 90, by);
+    sh.addColorStop(0, 'rgba(255,255,255,0)'); sh.addColorStop(0.5, luminance(T.pill) > 0.5 ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.08)'); sh.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = sh; ctx.fillRect(84, by - 60, 408, 60);
+    const tint = ctx.createLinearGradient(84, 0, 492, 0);
+    tint.addColorStop(0, rgba(T.bg1, 0.10)); tint.addColorStop(0.5 + 0.3 * Math.sin(t * 1.3), rgba(T.bg3 || T.bg2, 0.12)); tint.addColorStop(1, rgba(T.bg2, 0.10));
+    ctx.fillStyle = tint; ctx.fillRect(84, by - 60, 408, 60);
+    ctx.font = F(600, 21.5); ctx.fillStyle = luminance(T.pill) > 0.5 ? '#000000' : T.pillText; ctx.fillText(text, 107 - off, by - 29);
+  }
   else { ctx.font = F(600, 21); ctx.fillStyle = T.placeholder; ctx.globalAlpha *= phA; ctx.fillText('Сообщение', 108, by - 29); ctx.globalAlpha = 1; }
   const cursorOn = text ? true : (t * 1.6) % 1 < 0.55;
   if (cursorOn){ ctx.fillStyle = T.accent; rr(ctx, text ? 108.5 - off + tw : 104, by - 45, 2.6, 31, 1.3); ctx.fill(); }
@@ -1223,7 +1252,7 @@ function drawInput(ctx, sc, t, G){
     ctx.beginPath(); ctx.arc(462, by - 30, 13, 0, Math.PI * 2); ctx.stroke();
     ctx.beginPath(); ctx.arc(457.5, by - 34, 1.7, 0, Math.PI * 2); ctx.arc(466.5, by - 34, 1.7, 0, Math.PI * 2); ctx.fill();
     ctx.beginPath(); ctx.arc(462, by - 29.5, 6.5, 0.18 * Math.PI, 0.82 * Math.PI); ctx.stroke(); ctx.restore();
-  } else drawSticker(ctx, 462, by - 30, 13.5, T.placeholder);
+  } else drawSticker(ctx, 461, by - 29, 13, T.placeholder);
   circleBtn(ctx, 533, by - 30, 30, 0.08);
   if (micK > 0.01){
     ctx.save(); ctx.globalAlpha *= clamp(micK * 1.5, 0, 1);
@@ -1234,7 +1263,7 @@ function drawInput(ctx, sc, t, G){
     const r = 30 * sendK;
     ctx.save(); ctx.shadowColor = 'rgba(30,16,80,0.16)'; ctx.shadowBlur = 12; ctx.shadowOffsetY = 3;
     ctx.fillStyle = T.accent; ctx.beginPath(); ctx.arc(533, by - 30, r, 0, Math.PI*2); ctx.fill(); ctx.restore();
-    ctx.save(); ctx.globalAlpha *= clamp(sendK * 1.4, 0, 1); ctx.translate(533, by - 30); ctx.rotate(-Math.PI/9); ctx.scale(1.2 * sendK, 1.2 * sendK); ctx.translate(-12, -12); ctx.fillStyle = '#fff'; ctx.fill(ICONS.send); ctx.restore();
+    ctx.save(); ctx.globalAlpha *= clamp(sendK * 1.4, 0, 1); ctx.translate(533, by - 30); ctx.rotate(Math.PI/4); ctx.scale(1.15 * sendK, 1.15 * sendK); ctx.translate(-12, -12.5); ctx.fillStyle = '#fff'; ctx.fill(ICONS.send); ctx.strokeStyle = T.accent; ctx.lineWidth = 1.6; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(10.6, 13.4); ctx.lineTo(15.2, 8.8); ctx.stroke(); ctx.restore();
   }
   ctx.textBaseline = 'alphabetic';
 }
@@ -1603,14 +1632,30 @@ function applyBackdropColors(){
   S.gift.center = c; S.gift.edge = e; S.gift.pattern = shade(e, -0.26); S.gift.ribbonColor = shade(e, -0.24);
   return true;
 }
-async function fetchMeta(base){
-  // fragment's attribute file is not shared with other sites, so fall back to a public CORS relay for it
+function metaFromText(t){
+  // fragment JSON wrapped by a relay, or the t.me/nft page's description ("Model: X 2%\nBackdrop: …")
+  const jm = t.match(/\{[\s\S]*"attributes"[\s\S]*\}/);
+  if (jm){ try { const j = JSON.parse(jm[0]); if (j && Array.isArray(j.attributes)) return j; } catch(e) {} }
+  const dm = t.match(/(?:og|twitter):description"\s+content="([^"]+)"/) || t.match(/content="([^"]*(?:Model|Модель)[^"]*)"\s+(?:property|name)="(?:og|twitter):description"/);
+  const txt = dm ? dm[1].replace(/&#10;|\\n/g, '\n').replace(/&amp;/g, '&') : t;
+  const pick = re => { const m = txt.match(re); return m ? m[1].replace(/\s+\d[\d.,]*\s*%\s*$/, '').trim() : ''; };
+  const model = pick(/(?:Model|Модель):\s*([^\n<]+)/), backdrop = pick(/(?:Backdrop|Фон):\s*([^\n<]+)/), symbol = pick(/(?:Symbol|Узор|Значок):\s*([^\n<]+)/);
+  if (!model && !backdrop && !symbol) return null;
+  return {attributes: [{trait_type:'Model', value: model}, {trait_type:'Backdrop', value: backdrop}, {trait_type:'Symbol', value: symbol}].filter(a => a.value)};
+}
+async function fetchMeta(base, tSlug){
+  // fragment does not share its attribute file with other sites, so try it directly, then through public relays
+  const asText = u => r => r.text();
   const tries = [
     () => fetchWithTimeout(base + '.json', 5000).then(r => r.json()),
-    () => fetchWithTimeout('https://api.allorigins.win/raw?url=' + encodeURIComponent(base + '.json'), 20000).then(r => r.json()),
-    () => fetchWithTimeout('https://api.allorigins.win/get?url=' + encodeURIComponent(base + '.json'), 20000).then(r => r.json()).then(j => JSON.parse(j.contents))
+    () => fetchWithTimeout('https://r.jina.ai/' + base + '.json', 12000).then(r => r.text()).then(metaFromText),
+    () => fetchWithTimeout('https://api.allorigins.win/raw?url=' + encodeURIComponent(base + '.json'), 10000).then(r => r.text()).then(metaFromText),
   ];
-  for (const f of tries){ try { const j = await f(); if (j && (j.attributes || j.name)) return j; } catch(e) {} }
+  if (tSlug){
+    tries.push(() => fetchWithTimeout('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://t.me/nft/' + tSlug), 12000).then(r => r.text()).then(metaFromText));
+    tries.push(() => fetchWithTimeout('https://r.jina.ai/https://t.me/nft/' + tSlug, 12000).then(r => r.text()).then(metaFromText));
+  }
+  for (const f of tries){ try { const j = await f(); if (j && Array.isArray(j.attributes) && j.attributes.length) return j; } catch(e) {} }
   return null;
 }
 let nftRun = 0;
@@ -1622,7 +1667,7 @@ async function loadNftById(){
   showLinks(p);
   setStatus('', `Загружаю ${esc(p.pretty)} #${fmtNum(p.num)}…`); $('#nftSteps').hidden = true;
   const base = `https://nft.fragment.com/gift/${p.fSlug}`;
-  const metaP = fetchMeta(base);
+  const metaP = fetchMeta(base, p.tSlug);
   let gotAnim = false;
   try { const r = await fetchWithTimeout(base + '.lottie.json', 15000); await setLottie(await r.json(), p.pretty + ' #' + p.num); gotAnim = true; }
   catch(e){
@@ -1718,7 +1763,7 @@ async function loadGiftBundle(link, force){
   const b = {status:'loading', asset:null, meta:{collection: p.pretty, number: p.num, model:'', backdrop:'', symbol:''}};
   giftBundles.set(key, b); updateGiftRows(); requestDraw();
   const base = `https://nft.fragment.com/gift/${p.fSlug}`;
-  const metaP = fetchMeta(base);
+  const metaP = fetchMeta(base, p.tSlug);
   try {
     let data = null;
     try { data = await (await fetchWithTimeout(base + '.lottie.json', 15000)).json(); }
@@ -1747,7 +1792,8 @@ function updateGiftRows(){
     if (!parseNft(v)){ el.textContent = 'не похоже на ссылку t.me/nft/…'; el.className = 'gstat err'; return; }
     if (!b || b.status === 'loading'){ el.textContent = 'загружаю…'; el.className = 'gstat'; return; }
     if (b.status === 'err'){ el.textContent = 'анимация не загрузилась — откройте сайт не внутри Claude'; el.className = 'gstat err'; return; }
-    const m = b.meta; el.textContent = `${m.collection} #${fmtNum(m.number)}` + (m.model ? ` · ${m.model} · ${m.backdrop} · ${m.symbol}` : (b.metaDone ? '' : ' · названия подтягиваются…'));
+    const m = b.meta; el.textContent = `${m.collection} #${fmtNum(m.number)}` + (m.model ? ` · ${m.model} · ${m.backdrop} · ${m.symbol}` : (b.metaDone ? ' · названий модели/фона/узора в открытом доступе нет — впиши ниже' : ' · названия подтягиваются…'));
+    const row = el.closest('.ev'); if (row) row.querySelectorAll('.giftnames input').forEach((inp, i) => { const k = ['model', 'backdrop', 'symbol'][i]; if (m[k]) inp.placeholder = m[k]; });
     el.className = 'gstat ok';
   });
 }
@@ -1989,6 +2035,16 @@ function mkEventRow(sc, si, ev, ei){
     du.addEventListener('input', () => { ev.dur = parseFloat(du.value) || 0.3; onChange(); });
     du.addEventListener('focus', focusSeek);
     w.appendChild(li); w.appendChild(du); row.appendChild(w);
+    const names = el('div', 'giftnames');
+    [['model', 'Модель'], ['backdrop', 'Фон'], ['symbol', 'Узор']].forEach(([k, l]) => {
+      const inp = document.createElement('input'); inp.type = 'text'; inp.value = ev[k] || ''; inp.setAttribute('aria-label', l + ' для этого подарка');
+      const b0 = ev.nft ? giftBundles.get(normLink(ev.nft)) : null;
+      inp.placeholder = (b0 && b0.meta && b0.meta[k]) ? b0.meta[k] : l;
+      inp.addEventListener('input', () => { ev[k] = inp.value.trim(); onChange(); });
+      inp.addEventListener('focus', focusSeek);
+      names.appendChild(inp);
+    });
+    row._names = names;
     row._stat = stat;
   } else if (['out','in','status'].includes(ev.type)){
     const i = document.createElement('input'); i.type = 'text'; i.value = ev.text || ''; i.setAttribute('aria-label', 'Текст');
@@ -2016,6 +2072,7 @@ function mkEventRow(sc, si, ev, ei){
   row.appendChild(tools);
   row.addEventListener('click', e => { if (e.target === row) focusSeek(); });
   if (row._stat) row.appendChild(row._stat);
+  if (row._names) row.appendChild(row._names);
   return row;
 }
 $('#tplSpam').addEventListener('click', () => {
@@ -2064,6 +2121,22 @@ document.addEventListener('keydown', e => { if (e.code === 'Space' && !/INPUT|TE
   });
   $('#' + n + 'FileClear').addEventListener('click', e => { e.preventDefault(); S.profile[n + 'File'] = null; if (n === 'badge' && S.profile.badgeStyle === 'file') S.profile.badgeStyle = 'rosette'; syncFields(); onChange(); buildSlot(n); updateSlotNames(); });
 });
+async function loadCustomFont(buf, name){
+  const ff = new FontFace('StudioCustom', buf);
+  await ff.load(); document.fonts.add(ff);
+  customFontReady = true; S.theme.font = 'custom'; $('#fontName').textContent = name;
+  wrapCache.clear(); syncFields(); onChange();
+}
+$('#fontIn').addEventListener('change', async e => {
+  const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return;
+  try {
+    const buf = await f.arrayBuffer();
+    await loadCustomFont(buf, f.name);
+    try { const db = await idbOpen(); const tx = db.transaction('kv', 'readwrite'); tx.objectStore('kv').put({buf, name: f.name}, 'font'); } catch(err) {}
+  } catch(err){ $('#fontName').textContent = 'не получилось прочитать «' + f.name + '»'; }
+});
+function idbOpen(){ return new Promise((res, rej) => { const r = indexedDB.open('missed-studio', 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
+(async () => { try { const db = await idbOpen(); const g = db.transaction('kv').objectStore('kv').get('font'); g.onsuccess = () => { const v = g.result; if (v && v.buf) loadCustomFont(v.buf, v.name).catch(() => {}); }; } catch(e) {} })();
 $('#nftLoad').addEventListener('click', loadNftById);
 $('#nftIn').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); loadNftById(); } });
 async function handleGiftFiles(list){
